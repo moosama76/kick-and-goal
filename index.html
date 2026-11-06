@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kick &amp; Goal – Pixel League</title>
+<link rel="stylesheet" href="css/game.css">
+<base target="_blank">
+</head>
+<body>
+<div id="g"></div>
+<div id="hud-stack">
+<div id="hud" class="pill"></div>
+<div id="health" role="img" aria-label="3 of 3 hearts"><span class="heart" aria-hidden="true"></span><span class="heart" aria-hidden="true"></span><span class="heart" aria-hidden="true"></span></div>
+</div>
+<div id="msg" class="pill"></div>
+<div id="menu" role="dialog" aria-label="Level select"><div class="panel"><h1>KICK &amp; GOAL</h1><p>PIXEL LEAGUE · SELECT ANY CONFIGURATION</p><div class="level-grid"></div><p id="loadout-status">CHOOSE ONE LOADOUT BEFORE STARTING</p><div class="upgrade-grid"></div><button class="menu-action">RESUME</button></div></div>
+<div id="help" class="pill">← → move · Space/↑ jump · LMB/X shoot · R/right-click recall · Ball Jump loadout: land on an airborne ball · L levels · M sound</div>
+<script src="vendor/phaser-4.2.0.min.js"></script>
+<script src="js/state.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/levels.js"></script>
+<script src="js/game.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
