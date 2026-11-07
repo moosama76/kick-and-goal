@@ -3,7 +3,7 @@ const LV=[
 {n:'1 · Remote Delivery',m:'RECALL',diff:'EASY',hint:'Hold R: the ball finds a route around walls.',w:38,h:24,f:[],o:{},x:[[10,16,1,7],[18,16,1,7],[27,18,1,5]],g:[2,18,3,3],p:[3,21],b:[34,21]},
 {n:'2 · Across the Divide',m:'TRAVERSAL',diff:'EASY',hint:'Cross the barrier with your selected loadout, clear every enemy and score with the ball.',w:40,h:24,f:[],o:{},x:[[10,17,2,1],[20,10,2,1],[30,6,2,1],[36,4,3,1]],g:[36,1,3,3],p:[3,21],b:[7,21]},
 {n:'3 · Sky Relay',m:'RECALL',diff:'MEDIUM',hint:'Use normal jumps, touch the relay and defeat the guards. Rocket helps clear the route.',w:38,h:28,f:[],o:{},x:[[5,24,8,1],[14,20,8,1],[5,16,8,1],[14,12,8,1],[23,8,8,1],[29,4,8,1]],g:[33,1,3,3],p:[3,26],b:[7,26],s:[[9,15]],d:[[28,2,1,5]],normalJumps:true},
-{n:'4 · Relay Ascent',m:'CIRCUIT',diff:'EASY',hint:'',overview:true,ceilingLift:24,w:32,h:18,f:[],o:{},x:[],g:[28,-.5,3,3],p:[3,16],b:[7,16]},
+{n:'4 · Relay Ascent',m:'CIRCUIT',diff:'EASY',hint:'',overview:true,overviewHeight:312,ceilingLift:40,w:32,h:18,f:[],o:{},x:[],g:[28,-1,3,3],p:[3,16],b:[7,16]},
 makeRecallChamber(),
 {n:'6 · Overload',m:'CIRCUIT',diff:'MEDIUM',hint:'Touch locks 1 > 2 > 3. Lock 2 opens the upper route; lock 3 completes the final gate.',w:44,h:29,f:[4,8,14,20,24],o:{4:[[8,10]],8:[[34,36]],14:[[5,7]],20:[[4,6]],24:[[38,40]]},x:[[12,26,2,2],[24,25,2,1],[10,23,5,1],[28,21,1,1],[20,22,1,2],[14,19,3,1],[26,17,1,1],[30,18,1,2],[10,14,1,2],[24,13,1,1],[28,15,4,1],[14,10,1,2],[22,9,1,1],[26,11,5,1],[12,5,1,1],[20,6,1,2],[28,7,5,1],[20,2,1,2],[30,1,1,1]],g:[39,1,3,3],p:[3,27],b:[8,27],s:[[16,27],[18,19],[33,7]],requires:[[],[0],[1]],gateLinks:[[0,1,2],[0,1]],d:[[37,1,1,3],[35,5,1,3]]},
 {n:'7 · Blink Bastion',m:'TRAVERSAL',diff:'MEDIUM',hint:'The ball fits through the slot. Blink across, then use a normal jump over the second barrier.',w:40,h:24,f:[],o:{},x:[[14,1,1,21],[27,19,1,5],[18,19,3,1],[31,17,3,1]],partials:[[224,352,16,2],[224,366,16,2]],g:[35,20,3,3],p:[3,21],b:[7,21]},
@@ -23,7 +23,7 @@ function makeRecallChamber(){
     [43,17,2,1],[40,14,2,1],[43,11,2,1],[40,8,2,1],[44,7,1,1]
   ];
   return {n:'5 · Recall Chamber',m:'RECALL',diff:'HARD',hint:'One door at a time. Let the ball settle before changing the route.',
-    w:46,h:36,f:[],o:{},x,partials:[[320,480,288,2],[320,544,272,2]],
+    w:46,h:36,f:[],o:{},x,partials:[[320,480,288,2],[320,494,272,2],[304,544,288,2],[304,558,288,2]],
     g:[2,32,3,3],p:[8,34],b:[37,30],
     d:[[37,31,1,1],[19,34,1,1],[6,31,1,4]],
     routeSelectors:[[44,34],[44,6],[39,34]],initialRoute:2,deliveryRoute:2};

@@ -8,4 +8,4 @@ Move: A/D or arrows. Jump: Space. Aim/kick: left click. Recall: hold R or right 
 
 GitHub Pages publishes main from the repository root. All runtime assets are local; no build or application server is required. Phaser is MIT licensed; see vendor/PHASER-LICENSE.md.
 
-Development source revision: 1612879b581b045cd8424007ed72cd467a771d87
+Development source revision: d6274bc227a56043d057015e32e1c62822ebf801

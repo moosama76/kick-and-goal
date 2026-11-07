@@ -37,9 +37,30 @@ class Game extends Phaser.Scene{
       c.strokeStyle=f?'#66d9d1':'#436c7a';c.lineWidth=1;
       for(let x=5;x<47;x+=6){c.beginPath();c.moveTo(x,2);c.lineTo(x,46);c.stroke()}
       for(let y=5;y<47;y+=6){c.beginPath();c.moveTo(2,y);c.lineTo(46,y);c.stroke()}
-      rect(c,'#101522',0,0,48,3);rect(c,'#101522',0,0,3,48);rect(c,'#101522',45,0,3,48);
-      rect(c,'#f4f1de',1,1,46,2);rect(c,'#f4f1de',1,1,2,47);rect(c,'#f4f1de',45,1,2,47);
-      rect(c,'#7bd88f',2,45,44,2);
+      rect(c,'#101522',0,0,48,3);rect(c,'#101522',0,0,3,48);rect(c,'#101522',45,0,3,48);rect(c,'#101522',0,45,48,3);
+      rect(c,'#f4f1de',1,1,46,2);rect(c,'#f4f1de',1,1,2,46);rect(c,'#f4f1de',45,1,2,46);
+      rect(c,'#f4f1de',1,45,46,2);
+    });
+    tex('goalChains',48,48,c=>{
+      // Rasterized diagonal ovals keep crisp pixel edges and run corner to corner.
+      for(const direction of [-1,1])for(let i=0;i<7;i++){
+        const cx=6+i*6,cy=direction===1?cx:47-cx;
+        for(let dy=-6;dy<=6;dy++)for(let dx=-6;dx<=6;dx++){
+          const x=cx+dx,y=cy+dy;
+          if(x<2||x>45||y<2||y>45)continue;
+          const along=(dx+direction*dy)/Math.SQRT2,across=(dx-direction*dy)/Math.SQRT2;
+          const outer=along*along/42.25+across*across/3.61;
+          const metal=along*along/34.81+across*across/2.56;
+          const hole=along*along/20.25+across*across/.81;
+          if(outer>1||hole<1)continue;
+          rect(c,metal>1?'#101522':dy<0?'#b8c6e8':'#53688e',x,y);
+        }
+      }
+      rect(c,'#101522',20,15,8,10);rect(c,'#b8c6e8',21,16,6,8);
+      rect(c,'#101522',23,18,2,5);
+      rect(c,'#101522',17,22,14,12);rect(c,'#f2c14e',18,23,12,10);
+      rect(c,'#ffe66d',19,24,10,1);rect(c,'#b88238',19,31,10,1);
+      rect(c,'#50384c',23,26,2,4);rect(c,'#50384c',22,26,4,2);
     });
     for(let f=0;f<2;f++)tex('switch'+f,12,12,c=>{
       const col=f?'#7bd88f':'#ff6b4a';rect(c,'#101522',1,1,10,10);rect(c,col,2,2,8,8);rect(c,'#18233f',4,4,4,4);rect(c,'#f4f1de',5,5,2,2);
@@ -165,16 +186,16 @@ class Game extends Phaser.Scene{
       return {o,index,x:x*T+8,y:y*T+8};
     });
     this.switches=(L.s||[]).map(([x,y],i)=>{
-      const o=this.add.sprite(x*T+8,y*T+8,'switch0').setDepth(1),wire=this.add.graphics().setDepth(0);
+      const o=this.add.sprite(x*T+8,y*T+8,'switch0').setDepth(1),wire=this.add.graphics().setDepth(-8);
       const label=this.add.text(x*T+8,y*T-5,String(i+1),{fontFamily:'monospace',fontSize:'9px',color:'#ffe66d',backgroundColor:'#111a31'}).setOrigin(.5,1).setDepth(2);
       return {o,label,index:i,x:x*T+8,y:y*T+8,on:false,wire,door:this.doors[i],requires:(L.requires||[])[i]||[]};
     });
     this.switches.forEach(sw=>this.drawWire(sw));
     // All goal artwork shares this depth so every other object renders above it.
     this.goal=this.add.sprite(this.G.x,this.G.y,'goal0').setOrigin(0).setDepth(-2).setDisplaySize(this.G.w,this.G.h).play('goalGlow').setTint(0xff8a7a);
-    // Ceiling-height goals need their presence bars drawn over the boundary tiles.
-    this.goalBars=this.add.graphics().setDepth(this.i===2||this.i===1?7:-2);
-    this.goalOutline=this.add.graphics().setDepth(-2);
+    this.goalChains=this.add.image(this.G.x,this.G.y,'goalChains').setOrigin(0).setDepth(-1.5).setDisplaySize(this.G.w,this.G.h);
+    // Presence indicators must remain visible even when a goal meets ceiling tiles.
+    this.goalBars=this.add.graphics().setDepth(7);
     this.gfx=this.add.graphics().setDepth(5);
     this.p=this.physics.add.sprite(L.p[0]*T+8,L.p[1]*T+8,'p0').setDepth(6);
     this.p.body.setSize(10,14).setOffset(3,1);
@@ -201,7 +222,7 @@ class Game extends Phaser.Scene{
     this.gloveArt=this.add.image(this.p.x,this.p.y-25,'glove').setScale(.65).setDepth(4).setVisible(false);
     this.tg=this.add.zone(this.p.x,this.p.y,1,1);
     const camera=this.cameras.main;camera.setViewport(0,0,960,540);
-    const zoom=L.overview?Math.min(camera.width/W,camera.height/(H+lift)):2;
+    const zoom=L.overview?Math.min(camera.width/W,camera.height/(L.overviewHeight||H+lift)):2;
     if(L.overview&&lift)camera.setViewport(960-W*zoom,0,W*zoom,540);
     camera.setZoom(zoom).setBounds(0,-lift,W,H+lift).setRoundPixels(true).startFollow(this.tg,false,.12,.12);
     this.setLevelCameraBounds();
@@ -277,7 +298,9 @@ class Game extends Phaser.Scene{
     return this.switches.every(s=>s.on)&&this.enemies.every(e=>e.dead)&&(!this.doors||this.doors.every((d,i)=>d.open||(LV[this.i].routeSelectors&&i!==LV[this.i].deliveryRoute)));
   }
   updateGoalUnlock(){
-    if(this.goalUnlocked()&&!this.goalReady){this.goalReady=true;this.goal.setVisible(true).setTint(0x7bd88f);this.cameras.main.flash(90,123,216,143)}
+    const unlocked=this.goalUnlocked();
+    this.goalChains?.setVisible(!unlocked&&this.goal.visible);
+    if(unlocked&&!this.goalReady){this.goalReady=true;this.goal.setVisible(true).setTint(0x7bd88f);this.cameras.main.flash(90,123,216,143)}
   }
   goalPresence(){
     const G=this.G,b=this.ball;
@@ -289,7 +312,8 @@ class Game extends Phaser.Scene{
     if(!this.goalReady)return;
     const h=3,y=G.y-h,w=G.w/2;
     [this.won||presence.player,this.won||presence.ball].forEach((active,i)=>{
-      g.fillStyle(active?0xffe66d:0x203c51,1).fillRect(G.x+i*w,y,w,h);
+      const inset=i===0?1:0;
+      g.fillStyle(active?0xffe66d:0x53688e,1).fillRect(G.x+i*w+inset,y,w-1-inset,h);
     });
   }
   drawWire(sw){
@@ -414,8 +438,8 @@ class Game extends Phaser.Scene{
   updateLoadouts(dt){
     const p=this.p;
     this.gloveFx=(this.gloveFx||0)-dt;
-    this.ballJumpArt.setVisible(hasUp('bounce')).setPosition(this.ball.x,this.ball.y).setAlpha(this.ballJumpCool>0?.2:.8);
-    this.teleportArt.setVisible(hasUp('teleport')).setPosition(this.ball.x,this.ball.y).setScale(.6+Math.sin(this.time.now*.01)*.08).setAlpha(this.teleportCool>0?.2:.8);
+    this.ballJumpArt.setVisible(hasUp('bounce')&&this.ballJumpCool<=0).setPosition(this.ball.x,this.ball.y).setAlpha(.8);
+    this.teleportArt.setVisible(hasUp('teleport')&&this.teleportCool<=0).setPosition(this.ball.x,this.ball.y).setScale(.6+Math.sin(this.time.now*.01)*.08).setAlpha(.8);
     if(this.gloveState==='cooldown'){this.rocketMaterialized=false;if(this.gloveCool<=0)this.gloveState='orbit'}
     this.gloveArt.setVisible(hasUp('glove')&&this.gloveState!=='cooldown');if(!hasUp('glove')||this.gloveState==='cooldown')return;
     const g=this.gloveArt;this.gloveAngle+=dt*1.6;
@@ -635,7 +659,6 @@ class Game extends Phaser.Scene{
     const sx=p.x+(this.drib?this.slotOffset:this.face*11),sy=p.y+2;
     const dx=b.x-p.x,dy=b.y-p.y,d=Math.hypot(dx,dy),bg=bb.blocked.down;
     gf.clear();
-    this.goalOutline.clear();
     let pull=false;
     const recall=k.rc.isDown||this.input.activePointer.rightButtonDown();
     // Recall possession is based on contact, never speed or whether the player is grounded.
@@ -745,7 +768,6 @@ class Game extends Phaser.Scene{
     this.updateCameraTarget();
     const G=this.G;this.updatePuzzles();this.updateGoalUnlock();this.updateBallConfinement(dt,recall);
     const presence=this.goalPresence();this.updateGoalPresence(presence);
-    if(!this.goalUnlocked()&&this.goal.visible)this.goalOutline.lineStyle(2,0xff6b4a,.65).strokeRect(G.x-2,G.y-2,G.w+4,G.h+4);
     if(!this.won&&this.goalUnlocked()&&presence.player&&presence.ball){
       this.won=true;const time=this.completeLevel();
       const m=$('msg');m.textContent='GOAL!\n'+time.toFixed(1)+'s · '+this.kicks+' KICKS';m.style.display='block';
