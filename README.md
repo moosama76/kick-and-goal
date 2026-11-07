@@ -6,6 +6,8 @@ Desktop keyboard/mouse action-platformer with nine ball puzzles. Choose one load
 
 Move: A/D or arrows. Jump: Space. Aim/kick: left click. Recall: hold R or right click. Ball Blink: Q/E when equipped. Menu: L/Escape. Restart: Backspace. Music and SFX have independent sliders in the level menu.
 
+Level 2 has a normal player-contact checkpoint on its first raised platform. Checkpoints save respawn positions without healing.
+
 GitHub Pages publishes main from the repository root. All runtime assets are local; no build or application server is required. Phaser is MIT licensed; see vendor/PHASER-LICENSE.md.
 
-Development source revision: 5cf11fee1df595b81a161f53f94cac2c78de2483
+Development source revision: b924f7aef246d5ebc978f6d0d652420fea0690d0

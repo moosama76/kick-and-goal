@@ -1,7 +1,7 @@
 // Tile data: floors/openings, extra solids, goal, player/ball, targets, and linked gates.
 const LV=[
 {n:'1 · Remote Delivery',m:'RECALL',diff:'EASY',hint:'Hold R: the ball finds a route around walls.',w:38,h:24,f:[],o:{},x:[[10,16,1,7],[18,16,1,7],[27,18,1,5]],g:[2,18,3,3],p:[3,21],b:[34,21]},
-{n:'2 · Across the Divide',m:'TRAVERSAL',diff:'EASY',hint:'Cross the barrier with your selected loadout, clear every enemy and score with the ball.',w:40,h:24,f:[],o:{},x:[[10,17,2,1],[20,10,2,1],[30,6,2,1],[36,4,3,1]],g:[36,1,3,3],p:[3,21],b:[7,21]},
+{n:'2 · Across the Divide',m:'TRAVERSAL',diff:'EASY',hint:'Cross the barrier with your selected loadout, clear every enemy and score with the ball.',w:40,h:24,f:[],o:{},x:[[10,17,2,1],[20,10,2,1],[30,6,2,1],[36,4,3,1]],g:[36,1,3,3],p:[3,21],b:[7,21],s:[[10.5,16]]},
 {n:'3 · Sky Relay',m:'RECALL',diff:'MEDIUM',hint:'Use normal jumps, touch the relay and defeat the guards. Rocket helps clear the route.',w:38,h:28,f:[],o:{},x:[[5,24,8,1],[14,20,8,1],[5,16,8,1],[14,12,8,1],[23,8,8,1],[29,4,8,1]],g:[33,1,3,3],p:[3,26],b:[7,26],s:[[9,15]],d:[[28,2,1,5]],normalJumps:true},
 {n:'4 · Relay Ascent',m:'CIRCUIT',diff:'EASY',hint:'',overview:true,overviewHeight:312,ceilingLift:40,w:32,h:18,f:[],o:{},x:[],g:[28,-1,3,3],p:[3,16],b:[7,16]},
 makeRecallChamber(),
@@ -26,7 +26,7 @@ function makeRecallChamber(){
     w:46,h:36,f:[],o:{},x,partials:[[320,480,288,2],[320,494,272,2],[304,544,288,2],[304,558,288,2]],
     g:[2,32,3,3],p:[8,34],b:[37,30],
     d:[[37,31,1,1],[19,34,1,1],[6,31,1,4]],
-    routeSelectors:[[44,34],[44,6],[39,34]],initialRoute:2,deliveryRoute:2};
+    routeSelectors:[[44,34],[43.875,6],[39,34]],initialRoute:2,deliveryRoute:2};
 }
 // Existing left shaft, relocated upper lock, and right-side combat tower.
 function makeReturnTower(){
