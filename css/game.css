@@ -12,7 +12,7 @@ html,body{height:100%;margin:0;background:var(--bg);font:12px/1.5 "Courier New",
 #help{bottom:calc(8px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);white-space:normal;text-align:center;width:max-content;max-width:92vw;color:#b8c6e8}
 #msg{top:40%;left:50%;transform:translate(-50%,-50%);font-size:28px;font-weight:900;display:none;color:#ffe66d;border-color:#ffe66d;letter-spacing:2px;text-align:center;white-space:pre-line}
 #menu{position:absolute;inset:0;z-index:10;display:none;place-items:center;background:rgba(5,8,18,.88);padding:20px}
-#menu .panel{width:min(680px,94vw);max-height:92vh;overflow:auto;background:#111a31;border:4px solid #7bd88f;box-shadow:8px 8px 0 #080c18;padding:20px;color:#f4f1de;text-align:center}
+#menu .panel{min-width:0;box-sizing:border-box;max-height:calc(100dvh - 40px);overflow:auto;background:#111a31;border:4px solid #7bd88f;box-shadow:8px 8px 0 #080c18;padding:20px;color:#f4f1de;text-align:center}
 #menu h1{color:#ffe66d;font-size:24px;letter-spacing:3px;margin:0 0 4px}#menu p{color:#b8c6e8;margin:6px 0 16px}
 .level-grid,.upgrade-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
 .level-grid{grid-auto-rows:1fr}
@@ -24,3 +24,13 @@ html,body{height:100%;margin:0;background:var(--bg);font:12px/1.5 "Courier New",
 .upgrade-grid{margin-top:8px}.upgrade-grid button{text-align:center}.upgrade-grid button.active{border-color:#7bd88f;background:#294c5b;color:#ffe66d}
 .menu-action:disabled,.level-grid button:disabled{opacity:.55;cursor:default}.menu-action{display:block;margin:16px auto 0;padding:8px 22px;text-align:center}
 .upgrade-grid button:disabled{opacity:.6;cursor:default}
+
+.menu-layout{display:grid;grid-template-columns:minmax(0,1fr) 112px;gap:12px;align-items:center;width:min(860px,calc(100vw - 40px))}
+.audio-controls{display:flex;justify-content:space-between;gap:10px;box-sizing:border-box;padding:16px 10px;background:#111a31;border:2px solid #53688e;box-shadow:5px 5px 0 #080c18;color:#b8c6e8}
+.audio-controls label{display:flex;flex-direction:column;align-items:center;gap:12px;font-size:10px;cursor:pointer}
+.audio-controls output{font-size:10px;color:#ffe66d;min-width:4ch;text-align:center}
+.audio-controls input{writing-mode:vertical-lr;direction:rtl;appearance:none;-webkit-appearance:none;width:10px;height:168px;margin:0 10px;border:2px solid #53688e;background:#293a5d;border-radius:0;cursor:pointer;touch-action:none}
+.audio-controls input::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:22px;height:12px;border:2px solid #f4f1de;border-radius:0;background:#43aa8b;box-shadow:2px 2px 0 #080c18}
+.audio-controls input::-moz-range-thumb{width:18px;height:8px;border:2px solid #f4f1de;border-radius:0;background:#43aa8b;box-shadow:2px 2px 0 #080c18}
+.audio-controls input:focus-visible{outline:2px solid #ffe66d;outline-offset:5px}
+@media(max-width:600px){.menu-layout{grid-template-columns:minmax(0,1fr) 88px;gap:8px}#menu .panel{padding:12px}.audio-controls{padding:14px 5px;gap:2px}.audio-controls input{height:140px;margin:0 8px}.level-grid button,.upgrade-grid button{font-size:10px}}

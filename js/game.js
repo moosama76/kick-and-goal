@@ -41,27 +41,6 @@ class Game extends Phaser.Scene{
       rect(c,'#f4f1de',1,1,46,2);rect(c,'#f4f1de',1,1,2,46);rect(c,'#f4f1de',45,1,2,46);
       rect(c,'#f4f1de',1,45,46,2);
     });
-    tex('goalChains',48,48,c=>{
-      // Rasterized diagonal ovals keep crisp pixel edges and run corner to corner.
-      for(const direction of [-1,1])for(let i=0;i<7;i++){
-        const cx=6+i*6,cy=direction===1?cx:47-cx;
-        for(let dy=-6;dy<=6;dy++)for(let dx=-6;dx<=6;dx++){
-          const x=cx+dx,y=cy+dy;
-          if(x<2||x>45||y<2||y>45)continue;
-          const along=(dx+direction*dy)/Math.SQRT2,across=(dx-direction*dy)/Math.SQRT2;
-          const outer=along*along/42.25+across*across/3.61;
-          const metal=along*along/34.81+across*across/2.56;
-          const hole=along*along/20.25+across*across/.81;
-          if(outer>1||hole<1)continue;
-          rect(c,metal>1?'#101522':dy<0?'#b8c6e8':'#53688e',x,y);
-        }
-      }
-      rect(c,'#101522',20,15,8,10);rect(c,'#b8c6e8',21,16,6,8);
-      rect(c,'#101522',23,18,2,5);
-      rect(c,'#101522',17,22,14,12);rect(c,'#f2c14e',18,23,12,10);
-      rect(c,'#ffe66d',19,24,10,1);rect(c,'#b88238',19,31,10,1);
-      rect(c,'#50384c',23,26,2,4);rect(c,'#50384c',22,26,4,2);
-    });
     for(let f=0;f<2;f++)tex('switch'+f,12,12,c=>{
       const col=f?'#7bd88f':'#ff6b4a';rect(c,'#101522',1,1,10,10);rect(c,col,2,2,8,8);rect(c,'#18233f',4,4,4,4);rect(c,'#f4f1de',5,5,2,2);
       rect(c,col,0,5,2,2);rect(c,col,10,5,2,2);rect(c,col,5,0,2,2);rect(c,col,5,10,2,2);
@@ -193,7 +172,6 @@ class Game extends Phaser.Scene{
     this.switches.forEach(sw=>this.drawWire(sw));
     // All goal artwork shares this depth so every other object renders above it.
     this.goal=this.add.sprite(this.G.x,this.G.y,'goal0').setOrigin(0).setDepth(-2).setDisplaySize(this.G.w,this.G.h).play('goalGlow').setTint(0xff8a7a);
-    this.goalChains=this.add.image(this.G.x,this.G.y,'goalChains').setOrigin(0).setDepth(-1.5).setDisplaySize(this.G.w,this.G.h);
     // Presence indicators must remain visible even when a goal meets ceiling tiles.
     this.goalBars=this.add.graphics().setDepth(7);
     this.gfx=this.add.graphics().setDepth(5);
@@ -216,10 +194,11 @@ class Game extends Phaser.Scene{
     if(L.cover){this.physics.add.collider(this.shots,walls,shot=>shot.destroy());this.doors.forEach(d=>this.physics.add.collider(this.shots,d.o,shot=>shot.destroy()))}
     this.physics.add.overlap(this.p,this.shots,(p,shot)=>{shot.destroy();this.hurt(shot)});
     profile.used={};
-    Object.assign(this,{coy:0,buf:0,kc:0,bj:0,face:1,kicks:0,bounces:0,won:false,goalReady:false,drib:false,slotOffset:11,rt:0,path:null,plen:0,recallTarget:null,recalling:false,recallAge:0,recallSide:0,ballTrapped:false,ballWarning:0,ballWarned:false,was:false,shotActive:false,fx:[],fxClock:0,kickAnim:0,ballSpin:0,wasGrounded:false,menuOpen:false,started:this.time.now,attemptStarted:false,checkpoint:null,activeRoute:null,deaths:0,health:3,invuln:0,ballJumpCool:0,teleportCool:0,gloveCool:0,gloveState:'orbit',gloveTarget:null,gloveAngle:0,gloveFx:0,rocketMaterialized:false});
+    Object.assign(this,{coy:0,buf:0,kc:0,bj:0,face:1,kicks:0,bounces:0,won:false,goalReady:false,drib:false,slotOffset:11,rt:0,path:null,plen:0,recallTarget:null,recalling:false,recallAge:0,recallSide:0,ballTrapped:false,ballWarning:0,ballWarned:false,was:false,shotActive:false,fx:[],fxClock:0,kickAnim:0,ballSpin:0,wasGrounded:false,menuOpen:false,started:this.time.now,attemptStarted:false,checkpoint:null,activeRoute:null,deaths:0,health:3,invuln:0,ballJumpCool:0,teleportCool:0,gloveCool:0,gloveState:'orbit',gloveTarget:null,gloveAngle:0,gloveFx:0,rocketMaterialized:false,acquireFxArmed:true});
     this.ballJumpArt=this.add.image(this.ball.x,this.ball.y,'abilityRing').setTint(0x7bd88f).setScale(.6).setDepth(2).setVisible(hasUp('bounce'));
     this.teleportArt=this.add.image(this.ball.x,this.ball.y,'abilityRing').setTint(0xd49aff).setScale(.6).setDepth(2).setVisible(hasUp('teleport'));
     this.gloveArt=this.add.image(this.p.x,this.p.y-25,'glove').setScale(.65).setDepth(4).setVisible(false);
+    this.loadoutTimer=this.add.graphics().setDepth(9).setVisible(false);
     this.tg=this.add.zone(this.p.x,this.p.y,1,1);
     const camera=this.cameras.main;camera.setViewport(0,0,960,540);
     const zoom=L.overview?Math.min(camera.width/W,camera.height/(L.overviewHeight||H+lift)):2;
@@ -274,7 +253,7 @@ class Game extends Phaser.Scene{
     const foot=atPlayer&&LV[this.i].localRecovery?this.footTarget():null;
     bb.reset(foot&&this.ballClear(foot.x,foot.y)?foot.x:L.b[0]*T+8,foot&&this.ballClear(foot.x,foot.y)?foot.y:L.b[1]*T+8);
     bb.setAllowGravity(true).setGravityY(0).setVelocity(0,0).setBounce(.6);
-    Object.assign(this,{shotActive:false,drib:false,slotOffset:this.face*11,path:null,plen:0,recallTarget:null,recalling:false,recallAge:0,recallSide:0,ballTrapped:false,ballWarning:0,ballWarned:false,rt:0,kc:.4,ballSpin:0});
+    Object.assign(this,{shotActive:false,drib:false,slotOffset:this.face*11,path:null,plen:0,recallTarget:null,recalling:false,recallAge:0,recallSide:0,ballTrapped:false,ballWarning:0,ballWarned:false,rt:0,kc:.4,ballSpin:0,acquireFxArmed:true});
     this.ball.setTexture('ball0');this.gfx.clear();
     this.burst(this.ball.x,this.ball.y,0x7fe3ff,12,75);
   }
@@ -286,9 +265,8 @@ class Game extends Phaser.Scene{
   }
   hud(){
     const L=LV[this.i],lit=this.switches?this.switches.filter(s=>s.on).length:0,left=this.enemies?this.enemies.filter(e=>!e.dead).length:0;
-    const ability=UP.find(u=>hasUp(u.id)),cool=hasUp('bounce')?this.ballJumpCool:hasUp('teleport')?this.teleportCool:this.gloveCool;
-    const loadout=ability?ability.name+' '+(hasUp('glove')&&this.gloveState==='out'?'FLYING':cool>0?cool.toFixed(1)+'s':'READY'):'NONE';
-    $('hud').textContent=L.n+'  ·  '+L.diff+'  ·  '+loadout+'  ·  kicks: '+this.kicks+(this.switches&&this.switches.length?'  ·  locks: '+lit+'/'+this.switches.length:'')+(this.enemies&&this.enemies.length?'  ·  enemies: '+left+'/'+this.enemies.length:'');
+    this.updateLoadoutTimer();
+    $('hud').textContent=L.n+'  ·  '+L.diff+'  ·  kicks: '+this.kicks+(this.switches&&this.switches.length?'  ·  locks: '+lit+'/'+this.switches.length:'')+(this.enemies&&this.enemies.length?'  ·  enemies: '+left+'/'+this.enemies.length:'');
     const health=Math.max(0,Math.min(3,this.health??3));
     $('health').setAttribute('aria-label',health+' of 3 hearts');
     [...$('health').children].forEach((heart,index)=>heart.classList.toggle('empty',index>=health));
@@ -299,7 +277,6 @@ class Game extends Phaser.Scene{
   }
   updateGoalUnlock(){
     const unlocked=this.goalUnlocked();
-    this.goalChains?.setVisible(!unlocked&&this.goal.visible);
     if(unlocked&&!this.goalReady){this.goalReady=true;this.goal.setVisible(true).setTint(0x7bd88f);this.cameras.main.flash(90,123,216,143)}
   }
   goalPresence(){
@@ -341,7 +318,7 @@ class Game extends Phaser.Scene{
     this.burst(sw.x,sw.y,0x7bd88f,14,90);this.cameras.main.shake(100,.003);audio.sfx('switch');
     const L=LV[this.i],point=L.s[sw.index];
     this.checkpoint=L.checkpoints?.[sw.index]||{p:[...point],b:[...point]};
-    this.health=3;this.burst(sw.x,sw.y,0x7fe3ff,18,110);
+    this.burst(sw.x,sw.y,0x7fe3ff,18,110);
     this.openReadyDoors();this.updateGoalUnlock();this.hud();return true;
   }
   playerTouchesRect(x,y,w,h){const p=this.p.body;return p.right>x&&p.left<x+w&&p.bottom>y&&p.top<y+h}
@@ -435,7 +412,31 @@ class Game extends Phaser.Scene{
     this.drib=false;this.recalling=false;this.path=null;this.recallTarget=null;this.shotActive=false;this.kc=.25;this.teleportCool=15;
     this.burst(px,py,0xd49aff,16,100);this.burst(bx,by,0x7fe3ff,16,100);this.cameras.main.flash(80,127,227,255);audio.sfx('teleport');this.hud();
   }
+  updateLoadoutTimer(){
+    if(!this.loadoutTimer)return;
+    const cool=hasUp('bounce')?this.ballJumpCool:hasUp('teleport')?this.teleportCool:hasUp('glove')?this.gloveCool:0;
+    const full=hasUp('bounce')?1.5:hasUp('teleport')?15:10,g=this.loadoutTimer;
+    const head=this.p.getTopCenter(),radius=Math.max(1,Math.round(this.p.displayWidth/4));
+    // Every ability uses the same player-relative layout, including scaled sprites.
+    g.setPosition(Math.round(head.x),Math.round(head.y-radius*2)).setVisible(cool>0).clear();
+    if(cool<=0)return;
+    const remaining=Math.min(1,cool/full)*Math.PI*2;
+    // A tiny pixel pie empties clockwise as the ability recharges.
+    for(let y=-radius;y<=radius;y++)for(let x=-radius;x<=radius;x++){
+      const r=x*x+y*y;if(r>radius*radius)continue;
+      const angle=(Math.atan2(y,x)+Math.PI*2.5)%(Math.PI*2);
+      g.fillStyle(angle<remaining?0xffe66d:0x293a5d,angle<remaining?.5:1).fillRect(x,y,1,1);
+    }
+  }
+  acquireBallFeedback(){
+    if(this.acquireFxArmed===false)return;
+    this.acquireFxArmed=false;
+    this.p.setTintFill(0xfff1d0);
+    this.time.delayedCall(100,()=>this.p.clearTint());
+    this.burst(this.p.x,this.p.y-2,0x7fe3ff,6,35);
+  }
   updateLoadouts(dt){
+    this.updateLoadoutTimer();
     const p=this.p;
     this.gloveFx=(this.gloveFx||0)-dt;
     this.ballJumpArt.setVisible(hasUp('bounce')&&this.ballJumpCool<=0).setPosition(this.ball.x,this.ball.y).setAlpha(.8);
@@ -658,12 +659,13 @@ class Game extends Phaser.Scene{
     if(this.drib)this.slotOffset=ap(this.slotOffset,this.face*11,85*dt);
     const sx=p.x+(this.drib?this.slotOffset:this.face*11),sy=p.y+2;
     const dx=b.x-p.x,dy=b.y-p.y,d=Math.hypot(dx,dy),bg=bb.blocked.down;
+    if(d>26)this.acquireFxArmed=true;
     gf.clear();
     let pull=false;
     const recall=k.rc.isDown||this.input.activePointer.rightButtonDown();
     // Recall possession is based on contact, never speed or whether the player is grounded.
     if(recall&&!this.drib&&d<16){
-      this.drib=true;this.slotOffset=Phaser.Math.Clamp(dx,-14,14);this.kc=0;this.shotActive=false;bb.setGravityY(0);bb.setVelocity(0,0);
+      this.acquireBallFeedback();this.drib=true;this.slotOffset=Phaser.Math.Clamp(dx,-14,14);this.kc=0;this.shotActive=false;bb.setGravityY(0);bb.setVelocity(0,0);
     }
     // An acquired ball must stay acquired while either recall input is held.
     if(recall&&this.drib){
@@ -692,7 +694,7 @@ class Game extends Phaser.Scene{
           if(g&&Math.abs(dx)<16&&Math.abs(dy-2)<9){
             // Recall has reached its destination. Leave recall mode now;
             // otherwise the next frame's recall branch cancels acquisition.
-            this.drib=true;this.slotOffset=Phaser.Math.Clamp(foot.x-p.x,-14,14);this.kc=0;
+            this.acquireBallFeedback();this.drib=true;this.slotOffset=Phaser.Math.Clamp(foot.x-p.x,-14,14);this.kc=0;
             this.recalling=false;this.path=null;this.recallTarget=null;this.rt=0;this.recallAge=0;
             steerNow=false;
           }
@@ -730,7 +732,7 @@ class Game extends Phaser.Scene{
         else bb.setVelocityX(Phaser.Math.Clamp(pb.velocity.x+(sx-b.x)*18,-320,320));
       }else if(g&&this.kc<=0&&Math.abs(dx)<16&&Math.abs(dy-2)<8){
         // Acquire only close to the legs, regardless of facing direction.
-        this.drib=true;this.slotOffset=dx>=0?11:-11;
+        this.acquireBallFeedback();this.drib=true;this.slotOffset=dx>=0?11:-11;
       }
       if(!this.drib&&bg)bb.setVelocityX(bb.velocity.x*Math.exp(-1.3*dt));    // rolling friction
       if(bg&&Math.abs(bb.velocity.y)<50)bb.setVelocityY(0);                  // no endless micro-bounce

@@ -14,7 +14,11 @@
 <div id="health" role="img" aria-label="3 of 3 hearts"><span class="heart" aria-hidden="true"></span><span class="heart" aria-hidden="true"></span><span class="heart" aria-hidden="true"></span></div>
 </div>
 <div id="msg" class="pill"></div>
-<div id="menu" role="dialog" aria-label="Level select"><div class="panel"><h1>KICK &amp; GOAL</h1><p>PIXEL LEAGUE · SELECT ANY CONFIGURATION</p><div class="level-grid"></div><p id="loadout-status">CHOOSE ONE LOADOUT BEFORE STARTING</p><div class="upgrade-grid"></div><button class="menu-action">RESUME</button></div></div>
+<div id="menu" role="dialog" aria-label="Level select"><div class="menu-layout"><div class="panel"><h1>KICK &amp; GOAL</h1><p>PIXEL LEAGUE · SELECT ANY CONFIGURATION</p><div class="level-grid"></div><p id="loadout-status">CHOOSE ONE LOADOUT BEFORE STARTING</p><div class="upgrade-grid"></div><button class="menu-action">RESUME</button></div>
+<aside class="audio-controls" aria-label="Audio settings">
+<label for="music-volume"><span>MUSIC</span><input id="music-volume" type="range" min="0" max="100" step="1" value="100" aria-label="Music volume"><output id="music-volume-value" for="music-volume">100%</output></label>
+<label for="effects-volume"><span>SFX</span><input id="effects-volume" type="range" min="0" max="100" step="1" value="100" aria-label="Sound effects volume"><output id="effects-volume-value" for="effects-volume">100%</output></label>
+</aside></div></div>
 <div id="help" class="pill">← → move · Space/↑ jump · LMB/X shoot · R/right-click recall · Ball Jump loadout: land on an airborne ball · L levels · M sound</div>
 <script src="vendor/phaser-4.2.0.min.js"></script>
 <script src="js/state.js"></script>

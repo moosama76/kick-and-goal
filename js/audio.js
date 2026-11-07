@@ -1,10 +1,23 @@
 class ChipAudio{
-  constructor(){this.ctx=null;this.muted=false;this.step=0;this.next=0}
+  constructor(){
+    this.ctx=null;this.muted=false;this.step=0;this.next=0;this.musicVolume=1;this.effectsVolume=1;
+    try{
+      const saved=JSON.parse(localStorage.getItem('kickGoalAudio')||'{}');
+      for(const key of ['musicVolume','effectsVolume'])if(Number.isFinite(saved[key]))this[key]=Math.max(0,Math.min(1,saved[key]));
+    }catch{}
+  }
+  setVolume(channel,value){
+    if(channel!=='music'&&channel!=='effects')return;
+    const volume=Math.max(0,Math.min(1,Number.isFinite(value)?value:0));
+    this[channel+'Volume']=volume;
+    if(this.ctx)this[channel].gain.setTargetAtTime(volume*(channel==='music'?.2:.38),this.ctx.currentTime,.015);
+    try{localStorage.setItem('kickGoalAudio',JSON.stringify({musicVolume:this.musicVolume,effectsVolume:this.effectsVolume}))}catch{}
+  }
   start(){
     if(!this.ctx){
       const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
       const c=this.ctx=new AC();this.master=c.createGain();this.music=c.createGain();this.effects=c.createGain();
-      this.master.gain.value=.6;this.music.gain.value=.2;this.effects.gain.value=.38;
+      this.master.gain.value=this.muted?0:.6;this.music.gain.value=.2*this.musicVolume;this.effects.gain.value=.38*this.effectsVolume;
       this.music.connect(this.master);this.effects.connect(this.master);this.master.connect(c.destination);
       const buffer=c.createBuffer(1,c.sampleRate*.25,c.sampleRate),data=buffer.getChannelData(0);
       for(let i=0;i<data.length;i++)data[i]=Math.random()*2-1;this.noiseBuffer=buffer;
