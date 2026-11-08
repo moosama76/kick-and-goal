@@ -7,24 +7,67 @@
 <link rel="stylesheet" href="css/game.css">
 <base target="_blank">
 </head>
-<body>
+<body data-screen="title">
 <div id="g"></div>
+<main id="title-screen" aria-label="Main menu">
+  <header id="title-brand"><h1>KICK<br><span>&amp; GOAL</span></h1><p>ONE BALL. NINE PUZZLES.</p></header>
+  <nav id="title-actions" aria-label="Main menu actions"><button type="button" data-title-action="play">PLAY</button><button type="button" data-title-action="options">OPTIONS</button></nav>
+  <section id="title-options" aria-label="Options" tabindex="-1" hidden><h2>OPTIONS</h2>
+    <h3>CONTROLS</h3>
+    <p class="controls-note">Menus: WASD or arrow keys to navigate · Enter to choose.</p>
+    <dl class="controls-guide">
+      <div><dt><kbd>A</kbd> <kbd>D</kbd> / <kbd>←</kbd> <kbd>→</kbd></dt><dd>Move</dd></div>
+      <div><dt><kbd>Space</kbd> / <kbd>W</kbd> / <kbd>↑</kbd></dt><dd>Jump · release early for a shorter jump</dd></div>
+      <div><dt><kbd>Left click</kbd></dt><dd>Aim at the cursor and kick</dd></div>
+      <div><dt><kbd>Right click</kbd> / <kbd>R</kbd></dt><dd>Hold to pull the ball toward you</dd></div>
+      <div><dt><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> / <kbd>Wheel</kbd></dt><dd>Choose Ball Jump, Ball Blink, or Homing Rocket</dd></div>
+      <div><dt><kbd>Q</kbd> / <kbd>E</kbd></dt><dd>Use Ball Blink when equipped</dd></div>
+      <div><dt><kbd>L</kbd></dt><dd>Toggle the level selector</dd></div>
+      <div><dt><kbd>Esc</kbd></dt><dd>Toggle the level selector</dd></div>
+      <div><dt><kbd>Backspace</kbd></dt><dd>Restart the current level</dd></div>
+      <div><dt><kbd>M</kbd></dt><dd>Mute or unmute audio</dd></div>
+    </dl>
+    <p class="controls-note">Ball Jump: meet the ball with your feet while it is rising from a pull. Releasing the pull still counts while the ball rises. Homing Rocket attacks nearby enemies automatically.</p>
+    <p class="controls-note">Switch loadouts at any time. The running cooldown continues and blocks every ability until it finishes.</p>
+    <h3>AUDIO</h3>
+    <label for="title-music-volume">MUSIC <output id="title-music-volume-value" for="title-music-volume">100%</output></label>
+    <input id="title-music-volume" data-audio-channel="music" type="range" min="0" max="100" value="100">
+    <label for="title-effects-volume">SOUND EFFECTS <output id="title-effects-volume-value" for="title-effects-volume">100%</output></label>
+    <input id="title-effects-volume" data-audio-channel="effects" type="range" min="0" max="100" value="100">
+    <button id="title-back" type="button">BACK</button>
+  </section>
+</main>
 <div id="hud-stack">
 <div id="hud" class="pill"></div>
-<div id="health" role="img" aria-label="3 of 3 hearts"><span class="heart" aria-hidden="true"></span><span class="heart" aria-hidden="true"></span><span class="heart" aria-hidden="true"></span></div>
+<div id="loadout-hud" class="pill" aria-label="Loadout selection"><div class="loadout-head"><span>LOADOUT</span><small>1–3 · WHEEL</small></div><div class="loadout-slots"></div></div>
+
 </div>
+<div id="health" role="img" aria-label="3 of 3 hearts"><span class="heart" aria-hidden="true"></span><span class="heart" aria-hidden="true"></span><span class="heart" aria-hidden="true"></span></div>
 <div id="msg" class="pill"></div>
-<div id="menu" role="dialog" aria-label="Level select"><div class="menu-layout"><div class="panel"><h1>KICK &amp; GOAL</h1><p>PIXEL LEAGUE · SELECT ANY CONFIGURATION</p><div class="level-grid"></div><p id="loadout-status">CHOOSE ONE LOADOUT BEFORE STARTING</p><div class="upgrade-grid"></div><button class="menu-action">RESUME</button></div>
+<aside id="coach-dialogue" aria-label="Tutorial dialogue" aria-live="polite" hidden>
+  <div class="coach-head">
+    <canvas class="coach-avatar" width="16" height="12" aria-hidden="true"></canvas>
+    <div class="coach-id"><span class="coach-speaker">COACH</span><span class="coach-progress"></span></div>
+    <div class="coach-pips" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+  </div>
+  <strong class="coach-heading"></strong>
+  <p class="coach-text" aria-live="off"><span class="coach-measure" aria-hidden="true"></span><span class="coach-reveal"></span></p>
+  <span class="coach-action"></span>
+  <div id="coach-tail" aria-hidden="true" hidden><i class="t-out"></i><i class="t-in"></i></div>
+</aside>
+<div id="menu" role="dialog" aria-label="Level select"><div class="menu-layout"><div class="panel"><div class="home-hero" aria-hidden="true"><canvas id="home-art" width="360" height="121"></canvas><span class="hero-caption">ONE BALL. NINE PUZZLES.</span></div><h1>KICK &amp; GOAL</h1><p>PIXEL LEAGUE · SELECT ANY CONFIGURATION</p><div class="level-grid"></div><div class="level-menu-actions"><button class="menu-action">RESUME</button><button class="level-menu-back menu-action" type="button">BACK</button></div></div>
 <aside class="audio-controls" aria-label="Audio settings">
-<label for="music-volume"><span>MUSIC</span><input id="music-volume" type="range" min="0" max="100" step="1" value="100" aria-label="Music volume"><output id="music-volume-value" for="music-volume">100%</output></label>
-<label for="effects-volume"><span>SFX</span><input id="effects-volume" type="range" min="0" max="100" step="1" value="100" aria-label="Sound effects volume"><output id="effects-volume-value" for="effects-volume">100%</output></label>
+<label for="music-volume"><span>MUSIC</span><input id="music-volume" data-audio-channel="music" type="range" min="0" max="100" step="1" value="100" aria-label="Music volume"><output id="music-volume-value" for="music-volume">100%</output></label>
+<label for="effects-volume"><span>SFX</span><input id="effects-volume" data-audio-channel="effects" type="range" min="0" max="100" step="1" value="100" aria-label="Sound effects volume"><output id="effects-volume-value" for="effects-volume">100%</output></label>
 </aside></div></div>
-<div id="help" class="pill">← → move · Space/↑ jump · LMB/X shoot · R/right-click recall · Ball Jump loadout: land on an airborne ball · L levels · M sound</div>
 <script src="vendor/phaser-4.2.0.min.js"></script>
 <script src="js/state.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/levels.js"></script>
+<script src="js/home-art.js"></script>
+<script src="js/tutorial.js"></script>
 <script src="js/game.js"></script>
+<script src="js/title.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

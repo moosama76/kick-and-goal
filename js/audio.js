@@ -53,6 +53,7 @@ class ChipAudio{
   sfx(name){
     if(!this.ctx||this.muted)return;const t=this.ctx.currentTime;
     if(name==='kick'){this.sweep(210,65,.13,'square',.2);this.noise(t,.06,.1,this.effects,false)}
+    else if(name==='talk'){const notes=[62,65,64,69,67,64],index=this.talkStep||0;this.talkStep=index+1;this.note(notes[index%notes.length],t,.075,'square',.14,this.effects)}
     else if(name==='jump')this.sweep(240,480,.1,'square',.09);
     else if(name==='bounce'){this.sweep(170,650,.18,'square',.15);this.sweep(340,900,.12,'triangle',.12,.06)}
     else if(name==='recall')this.sweep(420,760,.08,'triangle',.08);

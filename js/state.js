@@ -12,3 +12,5 @@ if(profile.levelOrderVersion!==2){
 }
 const UP=[{id:'bounce',name:'BALL JUMP',desc:'Bounce off the ball · 1.5s cooldown'},{id:'teleport',name:'BALL BLINK',desc:'Q/E: teleport to the ball · 15s cooldown'},{id:'glove',name:'HOMING ROCKET',desc:'Automatic homing attack · 10s cooldown'}],hasUp=id=>profile.upgrades.includes(id);
 profile.upgrades=profile.upgrades.filter(id=>UP.some(u=>u.id===id)).slice(0,1);
+
+if(!profile.upgrades.length){profile.upgrades=[UP[0].id];saveProfile()}
