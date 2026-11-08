@@ -99,7 +99,7 @@ class CoachTutorial{
   show(){
     const lines=[
       ['COME ON IN!','Let’s start with the ball. Hold right-click or R to pull it all the way to your feet.',['HOLD','RIGHT-CLICK','R']],
-      ['NICE CONTROL!','Now aim with your mouse and left-click to kick the ball. Give it a go!',['AIM','LEFT-CLICK']],
+      ['NICE CONTROL!','A defender is on the pitch. Aim with your mouse and left-click to kick the ball into him. Give it a go!',['AIM','LEFT-CLICK','KILL']],
       ['GOOD KICK!','Try a different loadout. Use the mouse wheel or press 1, 2, or 3. A running cooldown stays with you when you switch.',['WHEEL','1','2','3']],
       ['LET’S GET SOME AIR!','Equip Ball Jump with 1. Jump, then briefly pull the ball upward beneath your feet to bounce higher. Land on the new platform!',['1','JUMP','PULL','LAND']],
       ['YOU’RE READY!','That’s it! Pull the ball back, then bring yourself and the ball into the goal on the right.',['REACH THE GOAL']]
@@ -179,7 +179,7 @@ class CoachTutorial{
   }
   advance(){
     if(this.done)return;
-    this.stage++;if(this.stage===3)this.revealPlatform();this.show();audio.sfx('select');
+    this.stage++;if(this.stage===1)this.spawnTarget();if(this.stage===3)this.revealPlatform();this.show();audio.sfx('select');
     if(this.npc.setTint){
       this.npc.setTint(0xfff1d0);
       if(typeof Phaser!=='undefined'&&Phaser.TintModes&&this.npc.setTintMode)this.npc.setTintMode(Phaser.TintModes.FILL);
@@ -210,6 +210,23 @@ class CoachTutorial{
     scene.burst((x+w/2)*T,y*T,0x7bd88f,18,65);audio.sfx('switch');
   }
   onBallJump(){if(this.stage===3)this.jumpPerformed=true}
+  // The aim lesson gets a live target: a walker patrols the training ground floor so
+  // the player has something to line the shot up on, and killing it is the lesson.
+  spawnTarget(){
+    const scene=this.scene,spot=LV[scene.i].tutorialTarget;
+    if(!spot||this.target||!scene.spawnEnemy)return;
+    const [x,y,patrol]=spot;
+    this.target=scene.spawnEnemy('w',x,y,patrol,0);
+    // Level 1 stays hazard-free: this walker is a target to shoot, not a threat to bump into.
+    this.target.harmless=true;
+    scene.enemies.push(this.target);
+    // Arrive with a puff so the new target is noticed rather than just appearing.
+    scene.burst(this.target.o.x,this.target.o.y,0xff6b4a,14,80);
+    scene.tweens?.add({targets:this.target.o,scaleX:{from:0,to:1},scaleY:{from:0,to:1},duration:260,ease:'Back.easeOut'});
+    scene.hud();
+  }
+  // Kicking alone no longer clears the aim lesson: the shot has to actually land.
+  onKick(){}
   reachedPlatform(){
     if(!this.platform)return false;
     const player=this.scene.p.body,platform=this.platform.body;
@@ -222,8 +239,10 @@ class CoachTutorial{
     if(this.stage===0){
       if(recall&&(pulling||this.scene.drib))this.pullSeen=true;
       if(this.pullSeen&&this.scene.drib)this.advance();
+    }else if(this.stage===1){
+      // Killing the target is what completes the aim lesson, not merely kicking.
+      if(this.target&&this.target.dead)this.advance();
     }else if(this.stage===3&&this.jumpPerformed&&this.reachedPlatform())this.advance();
   }
-  onKick(){if(this.stage===1)this.advance()}
   onLoadoutChange(){if(this.stage===2)this.advance()}
 }

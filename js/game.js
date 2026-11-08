@@ -248,8 +248,12 @@ class Game extends Phaser.Scene{
   changeLoadout(index){
     if(this.menuOpen||this.won||!UP[index]||hasUp(UP[index].id))return false;
     profile.upgrades=[UP[index].id];saveProfile();
-    this.gloveState=this.loadoutCooldown().remaining>0?'cooldown':'orbit';this.gloveTarget=null;this.rocketMaterialized=false;
-    this.ballJumpArt.setVisible(false);this.teleportArt.setVisible(false);this.gloveArt.setVisible(false);
+    // A launched rocket owns its flight until impact, independently of equipment.
+    if(this.gloveState!=='out'){
+      this.gloveState=this.loadoutCooldown().remaining>0?'cooldown':'orbit';this.gloveTarget=null;this.rocketMaterialized=false;
+      this.gloveArt.setVisible(false);
+    }
+    this.ballJumpArt.setVisible(false);this.teleportArt.setVisible(false);
     this.updateLoadoutHud();audio.sfx('select');this.tutorial?.onLoadoutChange();return true;
   }
   updateLoadoutHud(){
@@ -569,7 +573,9 @@ class Game extends Phaser.Scene{
     this.ballJumpArt.setVisible(hasUp('bounce')&&this.loadoutCooldown().remaining<=0).setPosition(this.ball.x,this.ball.y).setAlpha(.8);
     this.teleportArt.setVisible(hasUp('teleport')&&this.loadoutCooldown().remaining<=0).setPosition(this.ball.x,this.ball.y).setScale(.6+Math.sin(this.time.now*.01)*.08).setAlpha(.8);
     if(this.gloveState==='cooldown'){this.rocketMaterialized=false;if(this.loadoutCooldown().remaining<=0)this.gloveState='orbit'}
-    this.gloveArt.setVisible(hasUp('glove')&&this.gloveState!=='cooldown');if(!hasUp('glove')||this.gloveState==='cooldown')return;
+    const inFlight=this.gloveState==='out';
+    this.gloveArt.setVisible(inFlight||(hasUp('glove')&&this.gloveState!=='cooldown'));
+    if((!hasUp('glove')&&!inFlight)||this.gloveState==='cooldown')return;
     const g=this.gloveArt;this.gloveAngle+=dt*1.6;
     if(this.gloveState==='orbit'){
       // Hover above the player with a gentle bob, facing the same way as the player.
