@@ -105,13 +105,17 @@ class Game extends Phaser.Scene{
   init(d){this.i=d.i||0;this.entryScreen=d.showLevels||d.i===undefined?'home':'play'}
   create(){
     if(this.winTimer)this.winTimer.remove();
+    const newlyEarned=earnLoadoutsAt(this.i+1);
     const L=LV[this.i],K=this.input.keyboard;
     this.k=K.addKeys({l:'LEFT',r:'RIGHT',u:'UP',d:'DOWN',a:'A',dd:'D',w:'W',s:'S',sp:'SPACE',rc:'R',tp:'Q',tp2:'E',n:'N',menu:'L',cancel:'ESC',reset:'BACKSPACE',mute:'M',loadout1:'ONE',loadout2:'TWO',loadout3:'THREE'});
     this.input.mouse.disableContextMenu();this.physics.world.resume();$('menu').style.display='none';
-    this.events.once('shutdown',()=>{$('menu').style.display='none'});
+    this.events.once('shutdown',()=>{
+      $('menu').style.display='none';$('loadout-earned').hidden=true;$('wave-banner').hidden=true;
+      clearTimeout(this.unlockTimer);clearTimeout(this.waveBannerTimer);
+    });
     if(!this.textures.exists('tile'))this.makeArt();
     this.makeAnims();
-    const W=L.w*T,H=L.h*T,lift=L.ceilingLift||0,S=this.S=build(L),walls=this.physics.add.staticGroup();
+    const W=L.w*T,H=L.h*T,lift=L.ceilingLift||0,S=this.S=build(L),walls=this.walls=this.physics.add.staticGroup();
     this.physics.world.setBounds(0,-lift,W,H+lift);
     this.levelBackdrop=this.add.graphics().setDepth(-20);
     this.clouds=[];
@@ -170,18 +174,13 @@ class Game extends Phaser.Scene{
     this.physics.add.collider(this.p,walls);
     this.physics.add.collider(this.ball,walls);   // player and ball don't collide: ball control is scripted
     this.doors.forEach(d=>{this.physics.add.collider(this.p,d.o);this.physics.add.collider(this.ball,d.o)});
-    this.enemies=(EN[this.i+1]||[]).map(([type,x,y,patrol],i)=>{
-      const o=this.physics.add.sprite(x*T+8,y*T+8,type==='w'?'walker0':'drone0').setDepth(2),e={type,o,patrol:patrol?.map(tile=>tile*T+8),dir:i%2?1:-1,baseX:o.x,baseY:o.y,phase:i*1.7,cool:1.6+i*.4,dead:false};
-      if(type==='w'){o.body.setSize(12,12).setOffset(2,3);this.physics.add.collider(o,walls);this.doors.forEach(d=>this.physics.add.collider(o,d.o))}
-      else{o.body.setCircle(6,2,3);o.body.setAllowGravity(false);this.physics.add.collider(o,walls);this.doors.forEach(d=>this.physics.add.collider(o,d.o))}
-      return e;
-    });
+    this.enemies=(EN[this.i+1]||[]).map(([type,x,y,patrol],i)=>this.spawnEnemy(type,x,y,patrol,i));
     this.shots=this.physics.add.group();
     // The tower uses physical cover between combat floors. Other levels retain their existing projectile rules.
     if(L.cover){this.physics.add.collider(this.shots,walls,shot=>shot.destroy());this.doors.forEach(d=>this.physics.add.collider(this.shots,d.o,shot=>shot.destroy()))}
     this.physics.add.overlap(this.p,this.shots,(p,shot)=>{shot.destroy();this.hurt(shot)});
     profile.used={};
-    Object.assign(this,{coy:0,buf:0,kc:0,bj:0,face:1,kicks:0,bounces:0,won:false,goalReady:false,drib:false,slotOffset:11,rt:0,path:null,plen:0,recallTarget:null,recalling:false,recallAge:0,recallSide:0,ballTrapped:false,ballWarning:0,ballWarned:false,was:false,shotActive:false,fx:[],fxClock:0,kickAnim:0,ballSpin:0,wasGrounded:false,menuOpen:false,started:this.time.now,attemptStarted:false,checkpoint:null,activeRoute:null,deaths:0,dyingUntil:0,health:3,invuln:0,ballJumpCool:0,teleportCool:0,gloveCool:0,gloveState:'orbit',gloveTarget:null,gloveAngle:0,gloveFx:0,rocketMaterialized:false,ballPullRising:false,acquireFxArmed:true});
+    Object.assign(this,{coy:0,buf:0,kc:0,bj:0,face:1,kicks:0,bounces:0,won:false,goalReady:false,drib:false,slotOffset:11,rt:0,path:null,plen:0,recallTarget:null,recalling:false,recallAge:0,recallSide:0,ballTrapped:false,ballWarning:0,ballWarned:false,was:false,shotActive:false,fx:[],fxClock:0,kickAnim:0,ballSpin:0,wasGrounded:false,menuOpen:false,started:this.time.now,attemptStarted:false,checkpoint:null,activeRoute:null,deaths:0,dyingUntil:0,health:3,invuln:0,ballJumpCool:0,teleportCool:0,gloveCool:0,waveIndex:0,wavesComplete:false,gloveState:'orbit',gloveTarget:null,gloveAngle:0,gloveFx:0,rocketMaterialized:false,ballPullRising:false,acquireFxArmed:true});
     this.ballJumpArt=this.add.image(this.ball.x,this.ball.y,'abilityRing').setTint(0x7bd88f).setScale(.6).setDepth(2).setVisible(hasUp('bounce'));
     this.teleportArt=this.add.image(this.ball.x,this.ball.y,'abilityRing').setTint(0xd49aff).setScale(.6).setDepth(2).setVisible(hasUp('teleport'));
     this.gloveArt=this.add.image(this.p.x,this.p.y-25,'glove').setScale(.65).setDepth(4).setVisible(false);
@@ -195,7 +194,8 @@ class Game extends Phaser.Scene{
     if(this.routePads.length)this.selectRecallRoute(L.initialRoute);
     this.tutorial=L.tutorial?new CoachTutorial(this,L.coach):null;
     this.updateGoalUnlock();this.hud();
-    $('msg').style.display='none';this.setupLoadoutHud();this.levelMenu(this.entryScreen==='home');
+    $('msg').style.display='none';this.setupLoadoutHud(newlyEarned);this.levelMenu(this.entryScreen==='home');
+    if(newlyEarned.length)this.time.delayedCall(80,()=>this.showLoadoutReward(newlyEarned));
   }
   levelMenu(open,screen='home'){
     if(this.winTimer)this.winTimer.paused=open;
@@ -222,22 +222,37 @@ class Game extends Phaser.Scene{
     $('menu').style.display='none';
     this.scene.start('title');
   }
-  setupLoadoutHud(){
+  loadoutAvailable(id){
+    const ability=UP.find(u=>u.id===id);
+    return !!ability&&(!ability.unlockLevel||(profile.earnedLoadouts||['bounce']).includes(id));
+  }
+  // Only earned loadouts are rendered, numbered by unlock order so the visible
+  // keys stay 1, 2, 3 as the kit grows.
+  loadoutSlots(){return UP.filter(u=>this.loadoutAvailable(u.id)).sort((a,b)=>(a.unlockLevel||1)-(b.unlockLevel||1))}
+  setupLoadoutHud(newlyEarned=[]){
     this.lastLoadoutWheel=-Infinity;
     const slots=$('loadout-hud').querySelector('.loadout-slots');slots.textContent='';
-    UP.forEach((u,i)=>{
+    const available=this.loadoutSlots();
+    available.forEach((u,slot)=>{
       const button=document.createElement('button');button.type='button';button.dataset.loadout=u.id;
       button.title=u.desc;button.setAttribute('aria-label',u.name+' · '+u.desc);
-      button.innerHTML='<span class="loadout-key" aria-hidden="true">'+(i+1)+'</span><span class="loadout-icon icon-'+u.id+'" aria-hidden="true"></span><span class="loadout-copy"><span class="loadout-name">'+u.name+'</span><span class="loadout-meta"></span></span><span class="loadout-fill" aria-hidden="true"></span>';
-      button.onclick=()=>this.changeLoadout(i);slots.appendChild(button);
+      button.innerHTML='<span class="loadout-key" aria-hidden="true">'+(slot+1)+'</span><span class="loadout-icon icon-'+u.id+'" aria-hidden="true"></span><span class="loadout-copy"><span class="loadout-name">'+u.name+'</span><span class="loadout-meta"></span></span><span class="loadout-fill" aria-hidden="true"></span>';
+      if(newlyEarned.some(earned=>earned.id===u.id))button.classList.add('just-earned');
+      button.onclick=()=>this.changeLoadout(UP.indexOf(u));slots.appendChild(button);
     });
+    slots.dataset.count=available.length;
+    const hud=$('loadout-hud');hud.dataset.slots=available.length;
+    const hint=hud.querySelector('.loadout-head small');
+    if(hint)hint.textContent=available.length>1?'1–'+available.length+' · WHEEL':'1 · KEY';
     const wheel=(_pointer,_objects,_dx,dy)=>{
       if(this.menuOpen||!dy||this.time.now-this.lastLoadoutWheel<140)return;
       this.lastLoadoutWheel=this.time.now;
-      const index=UP.findIndex(u=>hasUp(u.id));this.changeLoadout((index+(dy>0?1:-1)+UP.length)%UP.length);
+      const available=this.loadoutSlots(),index=available.findIndex(u=>hasUp(u.id));
+      const next=available[(index+(dy>0?1:-1)+available.length)%available.length];
+      if(next)this.changeLoadout(UP.indexOf(next));
     };
     const hudWheel=event=>{event.preventDefault();wheel(null,null,0,event.deltaY)};
-    const hud=$('loadout-hud');hud.onpointerdown=event=>event.stopPropagation();hud.addEventListener('wheel',hudWheel,{passive:false});
+    hud.onpointerdown=event=>event.stopPropagation();hud.addEventListener('wheel',hudWheel,{passive:false});
     this.input.on('wheel',wheel);this.events.once('shutdown',()=>{this.input.off('wheel',wheel);hud.removeEventListener('wheel',hudWheel)});
     this.updateLoadoutHud();
   }
@@ -246,7 +261,7 @@ class Game extends Phaser.Scene{
       .reduce((longest,state)=>state.remaining>longest.remaining?state:longest,{remaining:0,full:1});
   }
   changeLoadout(index){
-    if(this.menuOpen||this.won||!UP[index]||hasUp(UP[index].id))return false;
+    if(this.menuOpen||this.won||!UP[index]||!this.loadoutAvailable(UP[index].id)||hasUp(UP[index].id))return false;
     profile.upgrades=[UP[index].id];saveProfile();
     // A launched rocket owns its flight until impact, independently of equipment.
     if(this.gloveState!=='out'){
@@ -270,6 +285,31 @@ class Game extends Phaser.Scene{
     });
   }
 
+  showLoadoutReward(earned){
+    const notice=$('loadout-earned');
+    if(!notice||!earned.length)return;
+    const slots=this.loadoutSlots();
+    earned=[...earned].sort((a,b)=>(a.unlockLevel||1)-(b.unlockLevel||1));
+    // A level jump can earn more than one ability; present them as a small stack.
+    notice.innerHTML='<span class="unlock-kicker">'+(earned.length>1?'LOADOUTS':'LOADOUT')+' ACQUIRED</span>'+earned.map(u=>{
+      const key=Math.max(1,slots.indexOf(u)+1);
+      return '<span class="unlock-item"><span class="unlock-icon icon-'+u.id+'" aria-hidden="true"></span><span class="unlock-copy"><strong>'+u.name+'</strong><span>'+u.desc+'</span><small>PRESS '+key+' TO EQUIP</small></span></span>';
+    }).join('');
+    notice.hidden=false;notice.classList.remove('show');void notice.offsetWidth;notice.classList.add('show');
+    audio.sfx('unlock');
+    const c=this.cameras?.main;
+    if(c){c.flash(150,123,216,143);this.shakeCamera(140,.002)}
+    if(this.p&&this.burst){
+      this.burst(this.p.x,this.p.y,0x7fe3ff,20,145);
+      this.burst(this.p.x,this.p.y,0xffe66d,14,100);
+    }
+    if(this.add&&this.tweens&&this.p){
+      const ring=this.add.image(this.p.x,this.p.y,'abilityRing').setDepth(8).setTint(0x7bd88f).setScale(.3).setAlpha(.95);
+      this.tweens.add({targets:ring,scaleX:3.2,scaleY:3.2,alpha:0,duration:560,ease:'Cubic.easeOut',onComplete:()=>ring.destroy()});
+    }
+    clearTimeout(this.unlockTimer);
+    this.unlockTimer=setTimeout(()=>{notice.hidden=true;notice.classList.remove('show')},4800);
+  }
   resizeGameView(){
     const L=LV[this.i],camera=this.cameras.main;
     const width=this.scale.gameSize.width,height=this.scale.gameSize.height;
@@ -307,13 +347,11 @@ class Game extends Phaser.Scene{
       this.tg.setPosition(L.w*T/2,(L.h*T-(L.ceilingLift||0))/2);
       this.cameras.main.centerOn(this.tg.x,this.tg.y);return;
     }
-    const p=this.p,b=this.ball,c=this.cameras.main,v=c.worldView;
-    const dx=(b.x-p.x)*.3,dy=(b.y-p.y)*.3;
-    const far=Math.abs(dx)>c.width/c.zoom/2-32||Math.abs(dy)>c.height/c.zoom/2-32;
-    const outside=p.x<v.left||p.x>v.right||p.y<v.top||p.y>v.bottom;
-    this.tg.setPosition(far||outside?p.x:p.x+dx,far||outside?p.y:p.y+dy);
-    if(outside)c.centerOn(p.x,p.y);
+    const p=this.p,c=this.cameras.main,v=c.worldView;
+    this.tg.setPosition(p.x,p.y);
+    if(p.x<v.left||p.x>v.right||p.y<v.top||p.y>v.bottom)c.centerOn(p.x,p.y);
   }
+
   spawnPoints(){return this.checkpoint||LV[this.i]}
   recoverBall(atPlayer=false){
     const L=this.spawnPoints();this.burst(this.ball.x,this.ball.y,0x7fe3ff,8,55);
@@ -335,13 +373,13 @@ class Game extends Phaser.Scene{
   hud(){
     const L=LV[this.i],lit=this.switches?this.switches.filter(s=>s.on).length:0,left=this.enemies?this.enemies.filter(e=>!e.dead).length:0;
     this.updateLoadoutTimer();
-    $('hud').textContent=L.n+'  ·  '+L.diff+'  ·  kicks: '+this.kicks+(this.switches&&this.switches.length?'  ·  locks: '+lit+'/'+this.switches.length:'')+(this.enemies&&this.enemies.length?'  ·  enemies: '+left+'/'+this.enemies.length:'');
+    $('hud').textContent=L.n+'  ·  '+L.diff+(L.waves?'  ·  wave: '+(this.waveIndex+1)+'/'+L.waves.length:'')+'  ·  kicks: '+this.kicks+(this.switches&&this.switches.length?'  ·  locks: '+lit+'/'+this.switches.length:'')+(this.enemies&&this.enemies.length?'  ·  enemies: '+left+'/'+this.enemies.length:'');
     const health=Math.max(0,Math.min(3,this.health??3));
     $('health').setAttribute('aria-label',health+' of 3 hearts');
     [...$('health').children].forEach((heart,index)=>heart.classList.toggle('empty',index>=health));
   }
   goalUnlocked(){
-    return (!this.tutorial||this.tutorial.done)&&this.switches.every(s=>s.on)&&this.enemies.every(e=>e.dead)&&(!this.doors||this.doors.every((d,i)=>d.open||(LV[this.i].routeSelectors&&i!==LV[this.i].deliveryRoute)));
+    return (!LV[this.i]?.waves||this.wavesComplete===true)&&(!this.tutorial||this.tutorial.done)&&this.switches.every(s=>s.on)&&this.enemies.every(e=>e.dead)&&(!this.doors||this.doors.every((d,i)=>d.open||(LV[this.i].routeSelectors&&i!==LV[this.i].deliveryRoute)));
   }
   updateGoalUnlock(){
     const unlocked=this.goalUnlocked();
@@ -416,7 +454,7 @@ class Game extends Phaser.Scene{
     this.switches.forEach(sw=>{if(!sw.on){
       const ready=this.switchReady(sw);
       sw.o.setAlpha(ready?.75+Math.sin(this.time.now*.006)*.2:.4).setTint(ready?0xffffff:0x7f5aa2);
-      sw.label.setText(ready||this.i===5||LV[this.i].returnTower?String(sw.index+1):String(sw.index+1)+': NEED '+sw.requires.map(i=>i+1).join('+'));
+      sw.label.setText(ready||LV[this.i].compactLockLabels||LV[this.i].returnTower?String(sw.index+1):String(sw.index+1)+': NEED '+sw.requires.map(i=>i+1).join('+'));
       if(ready&&this.playerTouchesSwitch(sw))this.activateSwitch(sw);
     }});
   }
@@ -490,6 +528,105 @@ class Game extends Phaser.Scene{
   killEnemy(e,burstColor=0xff6b4a){
     if(e.dead)return;e.dead=true;e.o.disableBody(true,true);if(burstColor!==null)this.burst(e.o.x,e.o.y,burstColor,18,115);this.shakeCamera(120,.005);audio.sfx('break');this.openReadyDoors();this.hud();this.updateGoalUnlock();
   }
+  // The director owns arena pacing. updateWaves() itself stays immediate so
+  // staged tests and passability checks can advance deterministically.
+  updateWaveDirector(){
+    const waves=LV[this.i].waves;
+    if(!waves||this.wavesComplete)return;
+    const drones=this.enemies.filter(enemy=>enemy.type==='d'&&!enemy.dead);
+    if(drones.length){if(this.waveGap)this.cancelWaveGap(drones);return}
+    if(this.waveIndex+1>=waves.length){
+      this.updateWaves();
+      this.showWaveBanner('ARENA CLEARED','FINAL WAVE DEFEATED · CLEAR THE GUARDS','cleared',2200);
+      return;
+    }
+    if(!this.waveGap){this.beginWaveGap();return}
+    if(this.time.now<this.waveGap.until)return;
+    const next=this.waveGap.nextIndex;
+    this.waveGap=null;this.clearWaveMarkers();
+    this.updateWaves();
+    this.showWaveBanner('WAVE '+(this.waveIndex+1)+' / '+waves.length,'ENGAGE','incoming',1100);
+    this.presentWave(this.enemies.filter(enemy=>enemy.type==='d'&&!enemy.dead));
+    audio.sfx('waveStart');
+  }
+  beginWaveGap(){
+    const waves=LV[this.i].waves,nextIndex=this.waveIndex+1;
+    this.shots?.clear(true,true);
+    this.waveGap={until:this.time.now+1900,nextIndex};
+    this.clearWaveMarkers();
+    this.waveMarkers=[];
+    // Pulsing target rings preview exactly where the next flight will appear.
+    if(this.add&&this.tweens&&this.textures?.exists('abilityRing')){
+      waves[nextIndex].filter(([type])=>type==='d').forEach(([,x,y])=>{
+        const ring=this.add.image(x*T+8,y*T+8,'abilityRing').setDepth(1).setTint(0x7fe3ff).setScale(.3).setAlpha(.12);
+        this.tweens.add({targets:ring,scaleX:1.4,scaleY:1.4,alpha:.8,duration:520,yoyo:true,repeat:-1,ease:'Sine.easeInOut'});
+        this.waveMarkers.push(ring);
+      });
+    }
+    this.showWaveBanner('WAVE '+(this.waveIndex+1)+' CLEARED','NEXT WAVE INCOMING','cleared');
+    audio.sfx('waveClear');
+    this.time.delayedCall(820,()=>{
+      if(!this.waveGap)return;
+      const count=waves[nextIndex].filter(([type])=>type==='d').length;
+      this.showWaveBanner('WAVE '+(nextIndex+1)+' / '+waves.length,count+' DRONES INCOMING','incoming');
+    });
+  }
+  cancelWaveGap(drones){
+    // Defensive: if a drone somehow survives, resume play without a stale card.
+    this.waveGap=null;this.clearWaveMarkers();
+    if(drones.length)this.showWaveBanner('WAVE '+(this.waveIndex+1)+' / '+LV[this.i].waves.length,'ENGAGE','incoming',900);
+  }
+  clearWaveMarkers(){
+    (this.waveMarkers||[]).forEach(marker=>{this.tweens?.killTweensOf(marker);marker.destroy()});
+    this.waveMarkers=[];
+  }
+  showWaveBanner(title,sub,kind='incoming',duration=0){
+    const banner=$('wave-banner');
+    if(!banner)return;
+    banner.querySelector('.wave-kicker').textContent=kind==='cleared'?'ARENA':'WAVE';
+    banner.querySelector('.wave-title').textContent=title;
+    banner.querySelector('.wave-sub').textContent=sub;
+    banner.className=''+kind;
+    banner.hidden=false;banner.classList.remove('pop');void banner.offsetWidth;banner.classList.add('pop');
+    clearTimeout(this.waveBannerTimer);
+    if(duration)this.waveBannerTimer=setTimeout(()=>{banner.hidden=true},duration);
+  }
+  presentWave(incoming){
+    if(!this.tweens||!this.add||!this.time||!incoming.length)return;
+    incoming.forEach((enemy,index)=>{
+      const o=enemy.o;
+      // Fade the live body in while a pixel echo pops to full size behind it.
+      if(o.setAlpha)o.setAlpha(0);
+      const echo=this.add.image(o.x,o.y,o.texture?.key||'drone0').setDepth(2).setAlpha(.8).setScale(.2);
+      echo.setTint?.(enemy.type==='d'?0x7fe3ff:0xff6b4a);
+      this.tweens.add({targets:echo,scaleX:1.7,scaleY:1.7,alpha:0,delay:index*90,duration:420,ease:'Cubic.easeOut',onComplete:()=>echo.destroy()});
+      if(o.setAlpha)this.tweens.add({targets:o,alpha:1,delay:index*90,duration:220});
+      const ring=this.add.image(o.x,o.y,'abilityRing').setDepth(1).setTint(enemy.type==='d'?0x7fe3ff:0xff6b4a).setScale(.25).setAlpha(.9);
+      this.tweens.add({targets:ring,scaleX:2.3,scaleY:2.3,alpha:0,delay:index*90,duration:430,ease:'Cubic.easeOut',onComplete:()=>ring.destroy()});
+      this.burst(o.x,o.y,enemy.type==='d'?0x7fe3ff:0xff6b4a,6,35);
+    });
+  }
+  updateWaves(){
+    const waves=LV[this.i].waves;
+    if(!waves||this.wavesComplete||this.enemies.some(enemy=>enemy.type==='d'&&!enemy.dead))return;
+    if(this.waveIndex+1===waves.length){this.wavesComplete=true;this.hud();return}
+    const patrols=this.enemies.filter(enemy=>enemy.type==='w');
+    this.enemies.filter(enemy=>enemy.type!=='w').forEach(enemy=>enemy.o.destroy());
+    this.shots.clear(true,true);
+    this.waveIndex++;
+    const incoming=waves[this.waveIndex].map(([type,x,y,patrol],index)=>this.spawnEnemy(type,x,y,patrol,index));
+    this.enemies=[...patrols,...incoming];
+    audio.sfx('switch');this.hud();
+  }
+  spawnEnemy(type,x,y,patrol,index=0){
+    const o=this.physics.add.sprite(x*T+8,y*T+8,type==='w'?'walker0':'drone0').setDepth(2);
+    const enemy={type,o,patrol:patrol?.map(tile=>tile*T+8),dir:index%2?1:-1,baseX:o.x,baseY:o.y,phase:index*1.7,cool:1.6+index*.4,dead:false};
+    if(type==='w')o.body.setSize(12,12).setOffset(2,3);
+    else o.body.setCircle(6,2,3).setAllowGravity(false);
+    this.physics.add.collider(o,this.walls);
+    this.doors.forEach(door=>this.physics.add.collider(o,door.o));
+    return enemy;
+  }
   fire(e){
     const o=e.o,p=this.p,a=Math.atan2(p.y-o.y,p.x-o.x),speed=125,shot=this.shots.create(o.x,o.y,'shot');shot.body.setAllowGravity(false);shot.body.setCircle(3);shot.body.setVelocity(Math.cos(a)*speed,Math.sin(a)*speed);
     this.time.delayedCall(5000,()=>{if(shot.active)shot.destroy()});
@@ -524,7 +661,7 @@ class Game extends Phaser.Scene{
         this.ballPullRising=false;
         if(Math.abs(dx)>=Math.abs(dy))bb.setVelocity(-vx*.6,vy);
         else bb.setVelocity(vx,-vy*.6);
-      }else if(Math.hypot(this.p.x-o.x,this.p.y-o.y)<15)this.hurt(o);
+      }else if(!e.harmless&&Math.hypot(this.p.x-o.x,this.p.y-o.y)<15)this.hurt(o);
     });
   }
   teleport(){
@@ -582,7 +719,7 @@ class Game extends Phaser.Scene{
       g.setPosition(p.x+Math.sin(this.gloveAngle*.8)*5,p.y-25+Math.sin(this.gloveAngle*2.2)*2.5).setRotation(0).setFlipX(this.face<0);
       if(!this.rocketMaterialized){this.rocketMaterialized=true;this.rocketAppear(g.x,g.y)}
       let target=null,near=187.5;
-      this.enemies.forEach(e=>{if(e.dead)return;const d=Math.hypot(e.o.x-p.x,e.o.y-p.y);if(d<near&&this.los(p.x,p.y,e.o.x,e.o.y)){near=d;target=e}});
+      this.enemies.forEach(e=>{if(e.dead||e.practiceTarget)return;const d=Math.hypot(e.o.x-p.x,e.o.y-p.y);if(d<near&&this.los(p.x,p.y,e.o.x,e.o.y)){near=d;target=e}});
       if(target&&this.loadoutCooldown().remaining<=0){this.gloveTarget=target;this.gloveState='out';this.gloveCool=10;audio.sfx('gloveLaunch');this.hud()}
     }else if(this.gloveState==='out'){
       const e=this.gloveTarget;
@@ -769,7 +906,11 @@ class Game extends Phaser.Scene{
     if(this.menuOpen)return;
     if(this.dyingUntil&&this.time.now>=this.dyingUntil)this.endDeathFx();
     const frozen=this.dyingUntil>this.time.now;
-    if(!frozen)for(let i=0;i<UP.length;i++)if(JD(k['loadout'+(i+1)]))this.changeLoadout(i);
+    if(!frozen){
+      // Hotkeys follow the visible slots, not hidden abilities.
+      const available=this.loadoutSlots();
+      for(let slot=0;slot<available.length;slot++)if(JD(k['loadout'+(slot+1)]))this.changeLoadout(UP.indexOf(available[slot]));
+    }
     if(JD(k.reset)){this.scene.restart({i:this.i});return}
     const dir=frozen?0:(k.r.isDown||k.dd.isDown?1:0)-(k.l.isDown||k.a.isDown?1:0);
     const jh=!frozen&&(k.sp.isDown||k.u.isDown||k.w.isDown),g=pb.blocked.down;
@@ -916,7 +1057,7 @@ class Game extends Phaser.Scene{
     }
     if(!frozen)this.tutorial?.update(recall,pull);
     // --- combat, puzzles, and level flow
-    this.updateLoadouts(dt);this.updateEnemies(dt);
+    this.updateLoadouts(dt);this.updateEnemies(dt);this.updateWaveDirector();
     if(!frozen)this.updateCameraTarget();
     const G=this.G;this.updatePuzzles();this.updateGoalUnlock();this.updateBallConfinement(dt,recall);
     const presence=this.goalPresence();this.updateGoalPresence(presence);

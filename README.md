@@ -1,5 +1,3 @@
 # Kick & Goal
 
-Playable game.
-
-Development source: 76ec023e81bf66bbcba9c4cc51d01efb61a55990
+Development source: b32cf19361c72bb13ed4ccf16ca46f93fc61cd33

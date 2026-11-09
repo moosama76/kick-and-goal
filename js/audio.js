@@ -69,6 +69,9 @@ class ChipAudio{
     else if(name==='gloveLaunch'){this.sweep(140,520,.12,'sawtooth',.13);this.noise(t,.06,.07,this.effects,false)}
     else if(name==='gloveHit'){this.sweep(100,42,.16,'square',.22);this.noise(t,.12,.16,this.effects,false);this.sweep(700,260,.08,'triangle',.1,.03)}
     else if(name==='gloveReturn')this.sweep(500,260,.1,'triangle',.08);
+    else if(name==='waveClear')[72,76,79].forEach((n,i)=>this.note(n,t+i*.07,.12,'triangle',.12,this.effects));
+    else if(name==='waveStart'){[50,57,64,69].forEach((n,i)=>this.note(n,t+i*.045,.09,'square',.1,this.effects));this.noise(t,.1,.05,this.effects,false)}
+    else if(name==='unlock')[60,64,67,72,76,79].forEach((n,i)=>this.note(n,t+i*.065,.16,'square',.13,this.effects));
   }
   toggle(){this.muted=!this.muted;if(this.master)this.master.gain.setTargetAtTime(this.muted?0:.6,this.ctx.currentTime,.02);return this.muted}
 }

@@ -95,17 +95,16 @@ class CoachTutorial{
       c.fillStyle=color;c.fillRect(x,y,1,1);
     }
   }
-  get done(){return this.stage===4}
+  get done(){return this.stage===3}
   show(){
     const lines=[
       ['COME ON IN!','Let’s start with the ball. Hold right-click or R to pull it all the way to your feet.',['HOLD','RIGHT-CLICK','R']],
       ['NICE CONTROL!','A defender is on the pitch. Aim with your mouse and left-click to kick the ball into him. Give it a go!',['AIM','LEFT-CLICK','KILL']],
-      ['GOOD KICK!','Try a different loadout. Use the mouse wheel or press 1, 2, or 3. A running cooldown stays with you when you switch.',['WHEEL','1','2','3']],
       ['LET’S GET SOME AIR!','Equip Ball Jump with 1. Jump, then briefly pull the ball upward beneath your feet to bounce higher. Land on the new platform!',['1','JUMP','PULL','LAND']],
       ['YOU’RE READY!','That’s it! Pull the ball back, then bring yourself and the ball into the goal on the right.',['REACH THE GOAL']]
     ];
     const [heading,text,keys]=lines[this.stage];
-    this.dialogue.querySelector('.coach-progress').textContent=this.done?'TRAINING COMPLETE':'STEP '+(this.stage+1)+' OF 4';
+    this.dialogue.querySelector('.coach-progress').textContent=this.done?'TRAINING COMPLETE':'STEP '+(this.stage+1)+' OF 3';
     this.dialogue.querySelector('.coach-heading').textContent=heading;
     this.renderPips();
     this.renderKeys(keys);
@@ -179,7 +178,7 @@ class CoachTutorial{
   }
   advance(){
     if(this.done)return;
-    this.stage++;if(this.stage===1)this.spawnTarget();if(this.stage===3)this.revealPlatform();this.show();audio.sfx('select');
+    this.stage++;if(this.stage===1)this.spawnTarget();if(this.stage===2)this.revealPlatform();this.show();audio.sfx('select');
     if(this.npc.setTint){
       this.npc.setTint(0xfff1d0);
       if(typeof Phaser!=='undefined'&&Phaser.TintModes&&this.npc.setTintMode)this.npc.setTintMode(Phaser.TintModes.FILL);
@@ -209,7 +208,7 @@ class CoachTutorial{
     tiles.forEach((tile,index)=>scene.tweens?.add({targets:tile,scale:1,duration:170,delay:index*20,ease:'Back.easeOut'}));
     scene.burst((x+w/2)*T,y*T,0x7bd88f,18,65);audio.sfx('switch');
   }
-  onBallJump(){if(this.stage===3)this.jumpPerformed=true}
+  onBallJump(){if(this.stage===2)this.jumpPerformed=true}
   // The aim lesson gets a live target: a walker patrols the training ground floor so
   // the player has something to line the shot up on, and killing it is the lesson.
   spawnTarget(){
@@ -218,7 +217,7 @@ class CoachTutorial{
     const [x,y,patrol]=spot;
     this.target=scene.spawnEnemy('w',x,y,patrol,0);
     // Level 1 stays hazard-free: this walker is a target to shoot, not a threat to bump into.
-    this.target.harmless=true;
+    this.target.harmless=true;this.target.practiceTarget=true;
     scene.enemies.push(this.target);
     // Arrive with a puff so the new target is noticed rather than just appearing.
     scene.burst(this.target.o.x,this.target.o.y,0xff6b4a,14,80);
@@ -242,7 +241,7 @@ class CoachTutorial{
     }else if(this.stage===1){
       // Killing the target is what completes the aim lesson, not merely kicking.
       if(this.target&&this.target.dead)this.advance();
-    }else if(this.stage===3&&this.jumpPerformed&&this.reachedPlatform())this.advance();
+    }else if(this.stage===2&&this.jumpPerformed&&this.reachedPlatform())this.advance();
   }
-  onLoadoutChange(){if(this.stage===2)this.advance()}
+  onLoadoutChange(){}
 }
