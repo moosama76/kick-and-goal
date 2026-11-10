@@ -1,0 +1,25 @@
+{
+  "name": "kick-and-goal-pixel-league",
+  "private": true,
+  "scripts": {
+    "test": "npm run test:unit && npm run test:camera && npm run test:rules && npm run test:inputs && npm run test:browser",
+    "test:camera": "node scripts/browser-check.mjs --camera",
+    "test:unit": "node scripts/unit-check.mjs",
+    "test:layout": "node tests/configurations.cjs && node tests/level-layout.cjs",
+    "test:respawn": "node tests/respawn.cjs",
+    "test:teleport": "node tests/level7-teleport.cjs",
+    "test:browser": "node scripts/browser-check.mjs",
+    "test:rules": "node scripts/browser-check.mjs --rules",
+    "test:inputs": "node scripts/browser-check.mjs --inputs",
+    "test:solutions": "node scripts/browser-check.mjs --solutions",
+    "record": "node scripts/browser-check.mjs --record",
+    "package": "python3 scripts/package.py",
+    "test:tower": "node scripts/browser-check.mjs --tower",
+    "start": "node scripts/server.mjs",
+    "test:localhost": "node scripts/browser-check.mjs --url http://localhost:8000/index.html",
+    "test:combat": "node scripts/browser-check.mjs --combat-input"
+  },
+  "devDependencies": {
+    "playwright": "^1.64.1"
+  }
+}

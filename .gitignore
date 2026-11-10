@@ -1,0 +1,7 @@
+node_modules/
+.DS_Store
+.~lock.*
+__pycache__/
+artifacts/
+playwright-report/
+test-results/
