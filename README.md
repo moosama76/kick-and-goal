@@ -35,6 +35,8 @@ If the checkout is inside a `project-repo` folder, enter that folder before runn
 
 Click **Play**, select a level and follow the tutorial in level 1. Click inside the game if keyboard input is not focused. Audio starts after user interaction; adjust Music/SFX in Options if needed. Progress and settings are stored in this browser's local storage, so a different browser or local URL may start with a fresh save.
 
+New saves start with only level 1 unlocked. Complete a level to unlock the next; unlocked levels remain available for replay. Existing saved progress is preserved. Locked levels stay visible in the menu with a LOCKED label.
+
 ## Controls
 
 - Move: A/D or left/right arrows.

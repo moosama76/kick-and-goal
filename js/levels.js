@@ -393,6 +393,8 @@ const DRONE_RANGE = 276;
 const MENU_ORDER = [0, 1, 2, 3, 4, 5, 6, 7, 8];
 // Campaign progression follows the displayed level numbers.
 const LEVEL_ORDER = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+const isLevelUnlocked = (i) =>
+  Number.isInteger(i) && i >= 0 && i < LV.length && i < profile.unlocked;
 const nextLevelIndex = (i) => LEVEL_ORDER[(LEVEL_ORDER.indexOf(i) + 1) % LEVEL_ORDER.length];
 function build(L) {
   const s = [];

@@ -7,7 +7,12 @@ export async function cameraEffectsCheck(browser,root,url){
  const context=await browser.newContext({viewport:{width:960,height:540},recordVideo:{dir:out}});
  const page=await context.newPage(),errors=[],results=[];page.on('pageerror',e=>errors.push(e.message));
  try{
-  await page.goto(url||pathToFileURL(path.join(root,'index.html')).href);
+  // Fixture save unlocks the campaign for this focused check.
+    await page.addInitScript(() => {
+      if (!localStorage.getItem('kickGoalSave'))
+        localStorage.setItem('kickGoalSave', JSON.stringify({ unlocked: 9 }));
+    });
+    await page.goto(url||pathToFileURL(path.join(root,'index.html')).href);
   await page.locator('[data-title-action="play"]').click();
   await page.locator('[data-level="2"]').click();
   await page.waitForFunction(()=>window.game?.scene.getScene('game')?.p);

@@ -16,7 +16,12 @@ export async function cameraCheck(browser,root,entryUrl=null){
    outside:s.p.x<v.left||s.p.x>v.right||s.p.y<v.top||s.p.y>v.bottom};
  });
  try{
-  await page.goto(entryUrl||pathToFileURL(path.join(root,'index.html')).href);
+  // Fixture save unlocks the campaign for this focused check.
+    await page.addInitScript(() => {
+      if (!localStorage.getItem('kickGoalSave'))
+        localStorage.setItem('kickGoalSave', JSON.stringify({ unlocked: 9 }));
+    });
+    await page.goto(entryUrl||pathToFileURL(path.join(root,'index.html')).href);
   await page.locator('[data-title-action="play"]').click();
   await page.locator('[data-level="8"]').click();await page.waitForTimeout(100);
   const cases=[

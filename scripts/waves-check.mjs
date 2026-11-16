@@ -7,7 +7,12 @@ export async function wavesCheck(browser,root,url){
  const context=await browser.newContext({viewport:{width:1280,height:720},recordVideo:{dir:out}}),page=await context.newPage(),errors=[];
  page.on('pageerror',e=>errors.push(e.message));
  try{
-  await page.goto(url||pathToFileURL(path.join(root,'index.html')).href);
+  // Fixture save unlocks the campaign for this focused check.
+    await page.addInitScript(() => {
+      if (!localStorage.getItem('kickGoalSave'))
+        localStorage.setItem('kickGoalSave', JSON.stringify({ unlocked: 9 }));
+    });
+    await page.goto(url||pathToFileURL(path.join(root,'index.html')).href);
   await page.locator('[data-title-action="play"]').click();await page.locator('[data-level="9"]').click();
   await page.waitForFunction(()=>game.scene.getScene('game')?.p);
   await page.evaluate(()=>{game.scene.getScene('game').invuln=60});

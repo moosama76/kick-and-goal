@@ -11,7 +11,7 @@ class Game extends Phaser.Scene {
     createGameAnimations(this);
   }
   init(d) {
-    this.i = d.i || 0;
+    this.i = isLevelUnlocked(d.i) ? d.i : 0;
     this.entryScreen = d.showLevels || d.i === undefined ? 'home' : 'play';
   }
   create() {
@@ -353,7 +353,8 @@ class Game extends Phaser.Scene {
       button.dataset.difficulty = L.diff.toLowerCase();
       button.dataset.level = String(i + 1);
       button.className = current ? 'current' : '';
-      button.disabled = false;
+      button.disabled = !isLevelUnlocked(i);
+      if (button.disabled) button.title = 'Complete level ' + i + ' to unlock';
       if (current) button.setAttribute('aria-current', 'step');
       button.innerHTML =
         '<span class="level-number">' +
@@ -363,6 +364,7 @@ class Game extends Phaser.Scene {
         '</span><small class="difficulty">' +
         L.diff +
         '</small>' +
+        (button.disabled ? '<small class="level-locked">LOCKED</small>' : '') +
         (current ? '<small class="current-level">CURRENT LEVEL</small>' : '') +
         (best
           ? '<small class="best">BEST ' +
@@ -379,6 +381,7 @@ class Game extends Phaser.Scene {
       drawHomeScene(preview, L);
       button.prepend(preview);
       button.onclick = () => {
+        if (!isLevelUnlocked(i)) return;
         audio.sfx('select');
         menu.style.display = 'none';
         this.physics.world.resume();
@@ -2205,6 +2208,7 @@ class Game extends Phaser.Scene {
         this.scene.restart({ i: nextLevelIndex(this.i) })
       );
     }
-    if (JD(k.n)) this.scene.restart({ i: nextLevelIndex(this.i) });
+    if (JD(k.n) && isLevelUnlocked(nextLevelIndex(this.i)))
+      this.scene.restart({ i: nextLevelIndex(this.i) });
   }
 }
