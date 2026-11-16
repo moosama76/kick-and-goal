@@ -3,10 +3,10 @@ const root=path.join(__dirname,'..'),read=name=>fs.readFileSync(path.join(root,'
 function load(saved){
  let storage=saved?JSON.stringify(saved):null;
  const c=vm.createContext({localStorage:{getItem:()=>storage,setItem:(_key,value)=>storage=value},document:{},Phaser:{Scene:class{},Input:{Keyboard:{JustDown(){}}}},audio:{sfx(){}}});
- vm.runInContext(read('state')+read('levels')+read('game')+';globalThis.data={profile,UP,earnLoadoutsAt,Game,LV,EN,isLevelUnlocked}',c);
+ vm.runInContext(read('state')+read('levels')+read('game')+';globalThis.data={profile,UP,earnLoadoutsAt,Game,LV,EN}',c);
  return {data:c.data,saved:()=>JSON.parse(storage)};
 }
-const test=load(),{profile,earnLoadoutsAt,Game,LV,EN,isLevelUnlocked}=test.data;
+const test=load(),{profile,earnLoadoutsAt,Game,LV,EN}=test.data;
 assert.deepEqual(Array.from(profile.upgrades),['bounce']);assert.deepEqual(Array.from(profile.earnedLoadouts),['bounce']);
 const s=Object.assign(new Game(),{ballJumpCool:1,teleportCool:0,gloveCool:0,ballJumpArt:{setVisible(){}},teleportArt:{setVisible(){}},gloveArt:{setVisible(){}},updateLoadoutHud(){}});
 assert.equal(s.changeLoadout(1),false);assert.equal(s.changeLoadout(2),false);
@@ -23,19 +23,3 @@ const migrated=load(old);assert.equal(migrated.data.profile.best[3].time,66);ass
 assert.deepEqual(Array.from(migrated.data.profile.upgrades),['bounce'],'Old unearned selections reset safely');assert.deepEqual(Array.from(migrated.data.profile.earnedLoadouts),['bounce'],'Old free abilities do not count as earned');
 assert.equal(load(migrated.saved()).data.profile.best[3].time,66,'Score migration runs once');
 console.log('PASS: Jump-only start; Rocket at 3; Blink at new 6; locked input rejected; unlocks persist; level geometry/enemies and saved scores swap correctly');
-
-// Campaign access is shared by scene entry, menu choices and the skip shortcut.
-const campaign=load(),cg=campaign.data,scene=new cg.Game();
-assert.equal(cg.profile.unlocked,1);
-for(let i=0;i<9;i++)assert.equal(cg.isLevelUnlocked(i),i===0);
-for(const i of [-1,9,1.5,NaN])assert.equal(cg.isLevelUnlocked(i),false);
-scene.init({i:5});assert.equal(scene.i,0);
-Object.assign(scene,{time:{now:1000},started:0,kicks:2});
-for(let i=0;i<9;i++){
- scene.init({i});assert.equal(scene.i,i);scene.completeLevel();
- assert.equal(cg.profile.unlocked,Math.min(9,i+2));
-}
-const reloaded=load(campaign.saved());assert.equal(reloaded.data.profile.unlocked,9);
-scene.init({i:0});scene.completeLevel();assert.equal(cg.profile.unlocked,9);
-assert.equal(load({unlocked:4,levelOrderVersion:3}).data.profile.unlocked,4,'Existing earned progress is retained');
-console.log('PASS: sequential level unlocks, guarded scene entry, final-level cap, replay/reload and existing-save progress');

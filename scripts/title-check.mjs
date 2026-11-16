@@ -7,12 +7,7 @@ export async function titleCheck(browser,root,url){
  const context=await browser.newContext({viewport:{width:1280,height:720},recordVideo:{dir:out}}),page=await context.newPage(),errors=[];
  page.on('pageerror',e=>errors.push(e.message));
  try{
-  // Fixture save unlocks the campaign for this focused check.
-    await page.addInitScript(() => {
-      if (!localStorage.getItem('kickGoalSave'))
-        localStorage.setItem('kickGoalSave', JSON.stringify({ unlocked: 9 }));
-    });
-    await page.goto(url||pathToFileURL(path.join(root,'index.html')).href);
+  await page.goto(url||pathToFileURL(path.join(root,'index.html')).href);
   await page.waitForFunction(()=>window.game?.scene.isActive('title'));
   assert.equal(await page.locator('#title-actions button').count(),2);
   for(const [width,height] of [[1280,720],[390,844],[844,390]]){

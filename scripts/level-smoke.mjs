@@ -14,11 +14,6 @@ export async function levelSmoke(browser, root, url) {
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
   try {
-    // Fixture save unlocks the campaign for this focused check.
-    await page.addInitScript(() => {
-      if (!localStorage.getItem('kickGoalSave'))
-        localStorage.setItem('kickGoalSave', JSON.stringify({ unlocked: 9 }));
-    });
     await page.goto(url || pathToFileURL(path.join(root, 'index.html')).href);
     await page.locator('[data-title-action="play"]').click();
     for (let level = 1; level <= 9; level++) {

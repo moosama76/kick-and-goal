@@ -171,8 +171,8 @@ body {
   text-align: left;
   box-shadow: 3px 3px 0 #080c18;
 }
-.level-grid button:not(:disabled):hover,
-.level-grid button:not(:disabled):focus,
+.level-grid button:hover,
+.level-grid button:focus,
 .upgrade-grid button:hover,
 .upgrade-grid button:focus,
 .menu-action:hover {
@@ -448,14 +448,14 @@ body {
   background: #20354c;
   box-shadow: 3px 3px #080c18;
 }
-#menu[data-screen='home'] .level-grid button:not(:disabled):hover,
-#menu[data-screen='home'] .level-grid button:not(:disabled):focus-visible {
+#menu[data-screen='home'] .level-grid button:hover,
+#menu[data-screen='home'] .level-grid button:focus-visible {
   transform: translateY(-2px);
   border-color: #ffe66d;
   background: #293a5d;
   outline: none;
 }
-#menu[data-screen='home'] .level-grid button:not(:disabled):hover .level-preview {
+#menu[data-screen='home'] .level-grid button:hover .level-preview {
   opacity: 1;
 }
 #menu[data-screen='home'] .menu-action {

@@ -22,7 +22,7 @@ export async function homeCheck(browser,root,url){
  }
 
  // This scenario exercises the full kit; the fresh-profile lock path lives in progression-check.
- await page.evaluate(()=>{profile.unlocked=9;profile.highestLevelReached=9;profile.earnedLoadouts=['bounce','teleport','glove'];profile.upgrades=['bounce'];saveProfile();game.scene.getScene('game').levelMenu(true)});
+ await page.evaluate(()=>{profile.highestLevelReached=9;profile.earnedLoadouts=['bounce','teleport','glove'];profile.upgrades=['bounce'];saveProfile()});
  await page.locator('[data-level="2"]').click();
  await page.waitForFunction(()=>!game.scene.getScene('game').menuOpen);
  assert.equal(await page.locator('#loadout-hud button').count(),3);
